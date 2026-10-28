@@ -1,0 +1,8 @@
+Transaction failed
+Rs 4,500
+To: Ramesh Kumar
+ramesh.k@okkaveri
+12 Oct 2026, 7:42 pm
+UPI transaction ID: 628512347765
+From: Kaveri Bank XX4821
+If money was debited from your account, it will be refunded automatically.

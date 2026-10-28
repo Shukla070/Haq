@@ -79,8 +79,10 @@ give legal advice.
 
 ## Status
 
-Early build. See [docs/BUILD_LOG.md](docs/BUILD_LOG.md) for progress and
-[docs/DESIGN.md](docs/DESIGN.md) for the architecture.
+Early build. The agent core works end to end on a failed-UPI-debit case: from evidence to
+a verified bank complaint in about two minutes. See [server/README.md](server/README.md) to
+run it, [docs/BUILD_LOG.md](docs/BUILD_LOG.md) for progress, [docs/PLAN.md](docs/PLAN.md)
+for the plan, and [docs/DESIGN.md](docs/DESIGN.md) for the architecture.
 
 ## Acknowledgements
 

@@ -1,0 +1,123 @@
+{
+  "id": "upi_failed_debit",
+  "title": "Failed UPI payment: money debited but not credited or reversed",
+  "applies_when": "The customer's bank account was debited for a UPI payment, the payment did not complete (the person or merchant did not receive it), and the money has not come back.",
+  "variants": {
+    "p2p": {
+      "label": "Transfer to a person (beneficiary account not credited)",
+      "reversal_days": 1,
+      "rule": "RBI-TAT-UPI-P2P"
+    },
+    "p2m": {
+      "label": "Payment to a merchant (merchant did not get confirmation)",
+      "reversal_days": 5,
+      "rule": "RBI-TAT-UPI-P2M"
+    }
+  },
+  "compensation_per_day": 100,
+  "checklist": [
+    {
+      "id": "debit",
+      "question": "Was the customer's account debited for this payment, for how much, and on what date?",
+      "settled_by": "Bank SMS, bank statement or UPI app screenshot showing the debit, amount and date"
+    },
+    {
+      "id": "failure",
+      "question": "Did the payment fail to complete (the person or merchant did not receive it)?",
+      "settled_by": "UPI app status showing failed or pending, a merchant message, or the payee's statement"
+    },
+    {
+      "id": "payment_type",
+      "question": "Was it a transfer to a person or a payment to a merchant?",
+      "settled_by": "UPI app screenshot or SMS naming the payee"
+    },
+    {
+      "id": "reference",
+      "question": "What is the payment's UPI reference number (UTR/RRN)?",
+      "settled_by": "Bank SMS or UPI app transaction details"
+    },
+    {
+      "id": "not_reversed",
+      "question": "Has the money still not been reversed, or was it reversed late (and on what date)?",
+      "settled_by": "Bank statement or SMS after the reversal deadline; otherwise the customer's own statement"
+    },
+    {
+      "id": "complaint_history",
+      "question": "Has the customer already complained to their bank, when, and what was the reply?",
+      "settled_by": "Complaint acknowledgement, ticket number, or the bank's reply"
+    }
+  ],
+  "rules": [
+    {
+      "id": "RBI-TAT-UPI-P2P",
+      "citation": "RBI circular RBI/2019-20/67, DPSS.CO.PD No.629/02.01.014/2019-20 dated 20 September 2019, Annex, UPI item (a)",
+      "cite_as": "RBI/2019-20/67",
+      "says": "Where the account is debited but the beneficiary account is not credited, the beneficiary bank must auto-reverse the amount latest on T + 1 day (T is the calendar date of the transaction). Compensation of Rs 100 per day is payable if the delay is beyond T + 1 day.",
+      "source": "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=11693",
+      "verified_on": "2026-10-28"
+    },
+    {
+      "id": "RBI-TAT-UPI-P2M",
+      "citation": "RBI circular RBI/2019-20/67, DPSS.CO.PD No.629/02.01.014/2019-20 dated 20 September 2019, Annex, UPI item (b)",
+      "cite_as": "RBI/2019-20/67",
+      "says": "Where the account is debited but the transaction confirmation is not received at the merchant location, the amount must be auto-reversed within T + 5 days. Compensation of Rs 100 per day is payable if the delay is beyond T + 5 days.",
+      "source": "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=11693",
+      "verified_on": "2026-10-28"
+    },
+    {
+      "id": "RBI-TAT-SUO-MOTO",
+      "citation": "RBI circular RBI/2019-20/67 dated 20 September 2019, general principles",
+      "cite_as": "RBI/2019-20/67",
+      "says": "Wherever financial compensation is involved, it must be credited to the customer's account suo moto, without waiting for a complaint or claim from the customer. The turnaround times are the outer limit for resolution.",
+      "source": "https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=11693",
+      "verified_on": "2026-10-28"
+    },
+    {
+      "id": "RBIOS-2026-ELIGIBILITY",
+      "citation": "Reserve Bank - Integrated Ombudsman Scheme, 2026 (in force from 1 July 2026)",
+      "cite_as": "Integrated Ombudsman Scheme, 2026",
+      "says": "The customer must first complain to the bank. They can then approach the RBI Ombudsman if the bank does not reply within 30 days (or a longer time set by RBI, NPCI or card network guidelines), or if they are not satisfied with the reply.",
+      "source": "https://www.rbi.org.in/commonperson/english/scripts/FAQs.aspx?Id=3407",
+      "verified_on": "2026-10-28"
+    },
+    {
+      "id": "RBIOS-2026-TIME-LIMIT",
+      "citation": "Reserve Bank - Integrated Ombudsman Scheme, 2026 (in force from 1 July 2026)",
+      "cite_as": "Integrated Ombudsman Scheme, 2026",
+      "says": "The complaint to the Ombudsman must be filed within 90 days from the date the bank's reply period expires, or the date of the bank's last communication, whichever is later. File at https://cms.rbi.org.in, by email to crpc@rbi.org.in, or by post to the Centralised Receipt and Processing Centre, RBI, Central Vista, Sector 17, Chandigarh 160017. Toll-free help: 14448.",
+      "source": "https://www.rbi.org.in/commonperson/english/scripts/FAQs.aspx?Id=3407",
+      "verified_on": "2026-10-28"
+    }
+  ],
+  "ladder": [
+    {
+      "id": "bank",
+      "to": "The customer's own bank (the bank whose account was debited), through its grievance channel or the UPI app's 'raise a complaint' option",
+      "purpose": "Ask for the reversal and the compensation the RBI circular requires.",
+      "rules": [
+        "RBI-TAT-UPI-P2P",
+        "RBI-TAT-UPI-P2M",
+        "RBI-TAT-SUO-MOTO"
+      ],
+      "wait_days": 30
+    },
+    {
+      "id": "ombudsman",
+      "to": "RBI Integrated Ombudsman, via https://cms.rbi.org.in",
+      "purpose": "Escalate when the bank has not replied within 30 days, or replied unsatisfactorily.",
+      "rules": [
+        "RBI-TAT-UPI-P2P",
+        "RBI-TAT-UPI-P2M",
+        "RBI-TAT-SUO-MOTO",
+        "RBIOS-2026-ELIGIBILITY",
+        "RBIOS-2026-TIME-LIMIT"
+      ],
+      "filing_window_days": 90
+    }
+  ],
+  "out_of_scope": [
+    "Money sent to a fraudster or scammer: report on 1930 and https://cybercrime.gov.in at once; this is not a failed transaction.",
+    "Money sent to the wrong person by mistake (the payment succeeded).",
+    "Disputes about goods or services bought with a successful payment: use the merchant or consumer-commission route."
+  ]
+}
