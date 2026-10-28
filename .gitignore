@@ -1,0 +1,28 @@
+# Secrets
+.env
+*.keystore
+*.jks
+google-services.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Case data from local runs
+workspace/
+
+# Node / app builds
+node_modules/
+build/
+dist/
+.gradle/
+local.properties
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
