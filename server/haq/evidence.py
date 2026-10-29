@@ -1,6 +1,6 @@
 """Adding evidence to a case. Each item's text is extracted once and becomes the source of
 truth for every quote: text files are read as they are; screenshots and PDFs are
-transcribed by Muse Spark. Sensitive numbers are masked before the text is stored, and
+transcribed by Muse Spark; voice notes by Muse Voice Transcribe (haq/voice.py). Sensitive numbers are masked before the text is stored, and
 text that reads like instructions to an AI is flagged."""
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from .case import Case, CaseError
 TEXT_TYPES = {".txt", ".md", ".eml", ".sms"}
 IMAGE_TYPES = {".png", ".jpg", ".jpeg", ".webp"}
 PDF_TYPES = {".pdf"}
+AUDIO_TYPES = {".wav", ".m4a", ".mp3", ".ogg", ".opus", ".aac", ".amr", ".webm"}
 
 TRANSCRIBE_PROMPT = (
     "This file is evidence a customer uploaded for a complaint. Transcribe every piece of "
@@ -59,6 +60,10 @@ def extract(client: OpenAI | None, path: Path) -> dict:
     suffix = path.suffix.lower()
     if suffix in TEXT_TYPES:
         return {"kind": "text", "text": path.read_text(encoding="utf-8", errors="replace"), "visual_notes": ""}
+    if suffix in AUDIO_TYPES:
+        from . import voice  # Muse Voice Transcribe; calls the API directly, not through the OpenAI client
+
+        return {"kind": "voice", "text": voice.transcribe(path), "visual_notes": ""}
     if client is None:
         raise CaseError("a model client is needed to read images and PDFs")
     if suffix in IMAGE_TYPES:
