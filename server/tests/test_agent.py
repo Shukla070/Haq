@@ -104,6 +104,11 @@ class VerifierTest(unittest.TestCase):
         self.draft["body"] = GOOD_BODY.replace("Rs 1,500", "Rs 25,000")
         self.assertTrue(any("25000" in p for p in verify.check(self.case, self.draft)))
 
+    def test_an_amount_quoted_without_a_currency_sign_is_allowed(self):
+        self.case.record_fact("not_reversed", "E3", "Closing balance as on 27-10-2026: 22,004.50", "balance")
+        self.draft["body"] = GOOD_BODY + " My closing balance on 27 October was Rs 22,004.50."
+        self.assertEqual([], verify.check(self.case, self.draft))
+
     def test_a_citation_from_memory_is_refused(self):
         self.draft["body"] = GOOD_BODY + " This also breaches Section 72 of the Payment Act."
         self.assertTrue(any("Section 72" in p for p in verify.check(self.case, self.draft)))

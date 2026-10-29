@@ -75,6 +75,7 @@ _INSTRUCTION_PATTERNS = [
     r"you are (now )?(an? )?(ai|assistant|agent|language model|chatbot)",
     r"(as|dear) (an? )?(ai|assistant|agent|language model)",
     r"system prompt",
+    r"(note|message|instructions?) (for|to) (any |all )?(ai|automated|llm)( assistants?| agents?| systems?| models?)?",
     r"new instructions",
     r"do not (file|send|draft|submit) (a |the |any )?(complaint|draft)",
     r"(mark|treat) (this|the) (case|complaint|claim) as (closed|resolved|invalid|withdrawn)",
@@ -84,5 +85,7 @@ _INSTRUCTIONS = re.compile("|".join(_INSTRUCTION_PATTERNS), re.IGNORECASE)
 
 
 def instruction_like(text: str) -> list:
-    """Phrases in evidence that read as instructions to an AI agent."""
-    return sorted({match.group(0) for match in _INSTRUCTIONS.finditer(text or "")})
+    """Phrases in evidence that read as instructions to an AI agent. Whitespace is collapsed
+    first: screenshots wrap lines, so a phrase often arrives split across them."""
+    flat = re.sub(r"\s+", " ", text or "")
+    return sorted({match.group(0) for match in _INSTRUCTIONS.finditer(flat)})

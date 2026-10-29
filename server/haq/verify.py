@@ -20,12 +20,15 @@ from . import guard, rules
 from .case import Case, normalize
 
 _AMOUNT = re.compile(r"(?:₹|\bRs\.?|\bINR)\s*([\d,]+(?:\.\d{1,2})?)", re.IGNORECASE)
+# Statements and app screens often print amounts without a currency sign, so any number in
+# the supporting text counts as a known amount.
+_NUMBER = re.compile(r"(?<![\d/])(\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)(?![\d/])")
 _CIRCULAR = re.compile(r"RBI/\d{4}-\d{2}/\d+|DPSS[\w./ -]*?\d{4}-\d{2}|\b(?:section|clause|paragraph)\s+\d+[\w.()]*", re.IGNORECASE)
 
 
-def _amounts(text: str) -> set:
+def _amounts(text: str, pattern: re.Pattern = _AMOUNT) -> set:
     found = set()
-    for raw in _AMOUNT.findall(text or ""):
+    for raw in pattern.findall(text or ""):
         value = raw.replace(",", "")
         if value.endswith((".00", ".0")):
             value = value.split(".")[0]
@@ -92,10 +95,10 @@ def check(case: Case, draft: dict) -> list:
     # Amounts
     allowed = set()
     for fact in data["facts"]:
-        allowed |= _amounts(fact["quote"])
+        allowed |= _amounts(fact["quote"], _NUMBER)
     for statement in data["user_statements"]:
-        allowed |= _amounts(statement["statement"])
-    allowed |= _amounts(data.get("story", ""))
+        allowed |= _amounts(statement["statement"], _NUMBER)
+    allowed |= _amounts(data.get("story", ""), _NUMBER)
     allowed.add(str(pack["compensation_per_day"]))
     entitlement = data.get("entitlement") or {}
     if entitlement:

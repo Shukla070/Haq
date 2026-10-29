@@ -1,0 +1,10 @@
+KAVERI BANK - ACCOUNT STATEMENT
+Account: XX4821   Statement period: 01-09-2026 to 27-10-2026
+
+Date        Narration                                           Debit      Credit     Balance
+05-09-2026  UPI/CR/625100223310/SALARY ADV/RAVI                            12,000.00  28,410.00
+15-09-2026  UPI/DR/625811093342/FRESHMART ONLINE               1,299.00              27,111.00
+02-10-2026  UPI/DR/627200551208/METRO RECHARGE                   500.00              26,611.00
+18-10-2026  ATM/WDL/KAVERI BANK MG ROAD                        3,000.00              23,611.00
+
+Closing balance as on 27-10-2026: 23,611.00

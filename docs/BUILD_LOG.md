@@ -27,3 +27,18 @@ Dates are in IST.
 - First live runs on the sample case: about 1.5–2 minutes, 14 turns, about 89K tokens, ending
   in a verified bank complaint asking for the Rs 4,500 reversal and Rs 1,500 compensation.
   The verifier caught the agent citing a customer statement as a fact; it fixed it.
+
+## 2026-10-29
+
+- Voice notes are routed to a new voice module (Muse Voice Transcribe, Hindi and English
+  with code-switching; WAV only, so other formats are converted with ffmpeg). The module
+  itself is being built with Muse Code.
+- Screenshot and PDF intake tested live on rendered fictional evidence: exact
+  transcription, and the card number in a scanned PDF masked before the agent saw it.
+- Fixed a verifier false positive: statements print amounts without "Rs", so any number in
+  the quoted evidence now counts as a known amount.
+- New test case with a planted prompt injection in a bank support chat screenshot. The
+  agent ignored it and escalated correctly to the RBI Ombudsman (Rs 3,800 compensation,
+  file by 18 Jan 2027), but the code-level detector had missed it because the phrase was
+  split across screenshot lines. Fixed: the detector now collapses whitespace and catches
+  "note for AI assistants". Re-run: flagged, and the run finished in about 2 minutes.
