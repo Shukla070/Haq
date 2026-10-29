@@ -31,8 +31,9 @@ Dates are in IST.
 ## 2026-10-29
 
 - Voice notes are routed to a new voice module (Muse Voice Transcribe, Hindi and English
-  with code-switching; WAV only, so other formats are converted with ffmpeg). The module
-  itself is being built with Muse Code.
+  with code-switching; WAV only, so other formats are converted with ffmpeg). The module,
+  `haq/voice.py`, and its offline tests were built with Muse Code. Live check: an .m4a note
+  was converted and transcribed accurately in about 5 seconds.
 - Screenshot and PDF intake tested live on rendered fictional evidence: exact
   transcription, and the card number in a scanned PDF masked before the agent saw it.
 - Fixed a verifier false positive: statements print amounts without "Rs", so any number in
