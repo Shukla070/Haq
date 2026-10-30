@@ -5,3 +5,8 @@
 *.pdf binary
 *.mp4 binary
 *.m4a binary
+*.webp binary
+*.jar binary
+*.wav binary
+# Windows batch files need CRLF to run reliably
+*.bat text eol=crlf

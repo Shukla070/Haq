@@ -91,3 +91,16 @@ Dates are in IST.
   a run that fails is paused so the app can retry. Re-run: 82 polls, draft verified in 83
   seconds, another device's token gets 404.
 - The app's API contract: [APP_API.md](APP_API.md). 69 offline tests.
+- Android app, first working version (`android/`): Kotlin and Jetpack Compose on Android
+  Gradle Plugin 9.5, from Android Studio's own template so the versions match. Home (your
+  cases), new case (story plus screenshots and files through Android's photo picker, which
+  shares only the photos picked), live progress, and a screen per outcome: the verified
+  draft with Copy, Send by email and "I've sent it"; waiting; a question to answer;
+  referral with tap-to-call; retry. No networking library: plain `HttpURLConnection`.
+- End to end on the emulator: typed a story, attached the UPI screenshot, and watched the
+  progress screen step through the agent's work; after about two minutes it showed the
+  verified bank complaint (Rs 1,700 compensation, 17 days late, citing RBI/2019-20/67).
+- The emulator could not reach the laptop through its usual address (10.0.2.2). Switched
+  to `adb reverse`, which gives the device the laptop's server at its own 127.0.0.1 and
+  works the same for a phone on USB. Debug builds allow plain http only to 127.0.0.1;
+  release builds are https only.
