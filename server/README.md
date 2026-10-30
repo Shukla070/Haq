@@ -50,7 +50,7 @@ python -m unittest discover -s tests
 
 | Path | What it is |
 |---|---|
-| `haq/agent.py` | The loop: the model picks one tool per turn; code runs it and saves the run |
+| `haq/agent.py` | The loop: the model picks one tool per turn; code runs it, times it, and saves the run |
 | `haq/tools/` | One module per tool |
 | `haq/case.py` | The case record; refuses quotes that are not in the evidence |
 | `haq/rules/` | Rule packs (JSON) and the deadline and compensation maths |

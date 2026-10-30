@@ -1,10 +1,12 @@
 """The agent loop. Each turn the model picks one tool; code runs it, records the result,
 and saves the run. The loop ends when a tool's status says so (draft_ready, needs_input,
-referred), or at the turn limit, which pauses the run so it can resume."""
+referred, waiting, resolved), or at the turn limit, which pauses the run so it can resume.
+Each turn records how long the model and the tool took, so slow runs can be explained."""
 
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 from openai import OpenAI
@@ -56,18 +58,23 @@ def resume(case: Case, client: OpenAI, message: str, turns: int = 15) -> dict:
 
 def _loop(case: Case, client: OpenAI, run: dict, turns: int) -> dict:
     case.data["status"] = "working"
+    case.data["hold"] = None  # a hold is only for now; a resumed run decides again
     case.save()
+    began = time.monotonic()
+    run.setdefault("seconds", 0.0)
     definitions = tools.definitions()
     ctx = tools.Context(case=case, client=client)
     for index in range(turns):
         if index == turns - 1:
             run["messages"].append({"role": "user", "content": LAST_TURN})
+        asked = time.monotonic()
         try:
             response = client.responses.create(
                 model=config.model(), instructions=INSTRUCTIONS, input=run["messages"], tools=definitions
             )
         except Exception as error:  # the SDK already retried; pause so the run can resume
-            return _stop(case, run, "paused", note=str(error) or type(error).__name__)
+            return _stop(case, run, "paused", began, note=str(error) or type(error).__name__)
+        model_seconds = round(time.monotonic() - asked, 2)
         run["turn"] += 1
         usage = getattr(response, "usage", None)
         run["tokens"] += getattr(usage, "total_tokens", 0) or 0
@@ -76,27 +83,46 @@ def _loop(case: Case, client: OpenAI, run: dict, turns: int) -> dict:
         call = next((item for item in output if item.get("type") == "function_call"), None)
         if call is None:
             run["messages"].append({"role": "user", "content": NUDGE})
-            run["turns"].append({"turn": run["turn"], "tool": None, "status": "running"})
+            run["turns"].append({"turn": run["turn"], "tool": None, "status": "running", "model_seconds": model_seconds})
             _save_run(case, run)
             continue
+        started = time.monotonic()
         result = tools.run(ctx, call)
+        tool_seconds = round(time.monotonic() - started, 2)
         status = result.get("status", "running")
         run["messages"].append(
             {"type": "function_call_output", "call_id": call.get("call_id"), "output": json.dumps(result, ensure_ascii=False)}
         )
         run["turns"].append(
-            {"turn": run["turn"], "tool": call.get("name"), "status": status, "error": result.get("error") or result.get("problems")}
+            {
+                "turn": run["turn"],
+                "tool": call.get("name"),
+                "status": status,
+                "error": result.get("error") or result.get("problems"),
+                "model_seconds": model_seconds,
+                "tool_seconds": tool_seconds,
+            }
         )
         _save_run(case, run)
         if status != "running":
-            return _stop(case, run, status)
-    return _stop(case, run, "paused", note="turn limit reached")
+            return _stop(case, run, status, began)
+    return _stop(case, run, "paused", began, note="turn limit reached")
 
 
-def _stop(case: Case, run: dict, status: str, note: str = "") -> dict:
+def _stop(case: Case, run: dict, status: str, began: float, note: str = "") -> dict:
+    seconds = round(time.monotonic() - began, 1)
+    run["seconds"] = round(run["seconds"] + seconds, 1)  # across every start and resume
     case.data["status"] = status
-    case.log("run_stopped", status=status, turn=run["turn"], note=note)
+    case.log("run_stopped", status=status, turn=run["turn"], seconds=seconds, note=note)
     case.save()
     run["status"] = status
     _save_run(case, run)
-    return {"case_id": case.id, "status": status, "turn": run["turn"], "tokens": run["tokens"], "note": note}
+    return {
+        "case_id": case.id,
+        "status": status,
+        "turn": run["turn"],
+        "tokens": run["tokens"],
+        "seconds": seconds,
+        "slowest_model_turn": max((t.get("model_seconds", 0) for t in run["turns"]), default=0),
+        "note": note,
+    }

@@ -1,6 +1,6 @@
 """The agent's tools, one module per tool. Each module has DEFINITION (the function
 schema the model sees) and run(ctx, args) -> dict. A result's "status" other than
-"running" ends the agent run: draft_ready, needs_input or referred."""
+"running" ends the agent run: draft_ready, needs_input, referred, waiting or resolved."""
 
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from . import (
     calculate_entitlement,
     check_escalation,
     classify_dispute,
+    hold_case,
     list_evidence,
     read_evidence,
     record_fact,
@@ -36,6 +37,7 @@ MODULES = [
     ask_user,
     refer_out,
     submit_draft,
+    hold_case,
 ]
 BY_NAME = {module.DEFINITION["name"]: module for module in MODULES}
 

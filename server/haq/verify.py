@@ -1,6 +1,7 @@
 """The verifier: checks a draft before the customer ever sees it. It runs in code, after
 the agent, and the agent cannot skip it. A draft passes only if:
 
+- a complaint is due at all (not while the bank still has time to reply),
 - the escalation step is the one that is due, and every cited rule is in the rule pack and
   allowed for that step,
 - every cited fact exists, and every checklist item is proven, stated by the customer, or
@@ -37,6 +38,27 @@ def _amounts(text: str, pattern: re.Pattern = _AMOUNT) -> set:
     return found
 
 
+def unknown_amounts(case: Case, text: str) -> list:
+    """Rupee amounts in the text that come from neither the evidence, the customer's
+    statements, nor the computed entitlement. Used for drafts and for hold messages."""
+    data = case.data
+    allowed = set()
+    for fact in data["facts"]:
+        allowed |= _amounts(fact["quote"], _NUMBER)
+    for statement in data["user_statements"]:
+        allowed |= _amounts(statement["statement"], _NUMBER)
+    allowed |= _amounts(data.get("story", ""), _NUMBER)
+    if data["dispute_type"]:
+        allowed.add(str(rules.load(data["dispute_type"])["compensation_per_day"]))
+    entitlement = data.get("entitlement") or {}
+    if entitlement:
+        allowed.add(str(entitlement.get("compensation_owed")))
+    return [
+        f"the amount Rs {amount} is not in the evidence, the customer's statements or the computed entitlement"
+        for amount in sorted(_amounts(text) - allowed)
+    ]
+
+
 def check(case: Case, draft: dict) -> list:
     """Problems with the draft; an empty list means it passes."""
     problems = []
@@ -54,6 +76,8 @@ def check(case: Case, draft: dict) -> list:
         problems.append(f"step must be one of {', '.join(steps)}")
     elif not escalation:
         problems.append("call check_escalation before drafting, so the step is the one that is due")
+    elif escalation.get("step") in ("wait", None):
+        return [f"no complaint is due now ({escalation.get('reason')}): call hold_case instead of drafting"]
     elif escalation.get("step") != step["id"]:
         problems.append(f"the step due now is {escalation.get('step')!r}, not {step['id']!r}: {escalation.get('reason')}")
 
@@ -93,18 +117,7 @@ def check(case: Case, draft: dict) -> list:
             problems.append(f"checklist item {item!r} is not settled: record a fact or user statement, or list it as a gap")
 
     # Amounts
-    allowed = set()
-    for fact in data["facts"]:
-        allowed |= _amounts(fact["quote"], _NUMBER)
-    for statement in data["user_statements"]:
-        allowed |= _amounts(statement["statement"], _NUMBER)
-    allowed |= _amounts(data.get("story", ""), _NUMBER)
-    allowed.add(str(pack["compensation_per_day"]))
-    entitlement = data.get("entitlement") or {}
-    if entitlement:
-        allowed.add(str(entitlement.get("compensation_owed")))
-    for amount in sorted(_amounts(body) - allowed):
-        problems.append(f"the amount Rs {amount} is not in the evidence, the customer's statements or the computed entitlement")
+    problems += unknown_amounts(case, body)
 
     # Sensitive data and injected text
     for item in guard.sensitive_numbers(body + " " + draft.get("subject", "")):

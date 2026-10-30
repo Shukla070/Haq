@@ -51,18 +51,41 @@ One rule pack per dispute type, written and checked by hand:
 Every rule, section number and time limit is checked against its official source
 before it goes into a rule pack. Nothing is cited from model memory.
 
-## Tools (first cut)
+## Tools
+
+Evidence is transcribed when it is added (screenshots and PDFs with Muse Spark, voice
+notes with Muse Voice Transcribe), so the agent reads text. Its tools:
 
 | Tool | What it does |
 |---|---|
-| `read_evidence` | Read one evidence item (image, PDF, email text) and return quote-checked facts |
-| `transcribe_voice` | Turn a voice note into text with Muse Voice Transcribe |
-| `locate_in_media` | Find and track an object in a photo or video with SAM 3.1 |
-| `record_fact` | Add a fact to the case; refused unless its quote is in the evidence |
-| `classify_dispute` | Pick the dispute type and load its rule pack |
+| `list_evidence`, `read_evidence` | See what the customer shared, and read it (masked, with injection warnings) |
+| `classify_dispute` | Pick the dispute type and payment type; loads the rule pack's checklist |
+| `record_fact` | Add a fact; refused unless its quote is in the evidence |
+| `record_user_statement` | Record what only the customer says, kept apart from proof |
 | `add_timeline_event` | Record a dated event |
-| `draft_complaint` | Draft the complaint for the current escalation step |
-| `request_from_user` | Ask the user for missing evidence or a decision |
+| `calculate_entitlement` | Reversal deadline and compensation owed, computed in code |
+| `check_escalation` | Which step is due: complain to the bank, wait for its reply, or the Ombudsman |
+| `ask_user` | Ask the customer for something only they can provide |
+| `refer_out` | Send fraud, scams and other out-of-scope cases where they belong |
+| `submit_draft` | Hand the complaint to the verifier |
+| `hold_case` | End without a draft when none is due: the bank still has time, or the customer is satisfied |
+
+Planned: SAM 3.1 to locate damage in unboxing photos and videos for the e-commerce pack.
+
+## How a run ends
+
+| Status | Meaning | What the app shows |
+|---|---|---|
+| `draft_ready` | A verified complaint for the step that is due | The draft, to approve and send |
+| `waiting` | Complained recently; the bank still has time to reply | The reply deadline and what is owed so far |
+| `needs_input` | The agent needs something only the customer knows | The question |
+| `referred` | Outside what Haq handles | Where to go instead |
+| `resolved` | The customer accepts the bank's reply | Done |
+| `paused` | API error or turn limit | Retry |
+
+Each run records how long every model call and tool took (`run.json`). In the first live
+runs, model calls took 3–7 seconds each and tools under 0.1 seconds, so run time is the
+number of turns.
 
 ## What the workshop run taught us
 

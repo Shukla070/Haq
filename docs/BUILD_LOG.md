@@ -43,3 +43,19 @@ Dates are in IST.
   file by 18 Jan 2027), but the code-level detector had missed it because the phrase was
   split across screenshot lines. Fixed: the detector now collapses whitespace and catches
   "note for AI assistants". Re-run: flagged, and the run finished in about 2 minutes.
+
+## 2026-10-30
+
+- Kept the hand-written agent loop rather than adopting an agent framework: the value is
+  in the tools, the case record and the verifier, and the loop's exact stop, nudge and
+  resume behaviour is easier to control in 100 lines of our own code.
+- New outcome when no complaint is due yet: if the customer complained recently and the
+  bank still has time to reply, the agent now puts the case on hold until the bank's reply
+  deadline (`hold_case`) instead of being stuck unable to draft. The verifier refuses any
+  draft while the bank still has time, and the customer-facing hold message gets the same
+  amount and sensitive-number checks as a draft. Live run on a new sample: 14 turns, no
+  draft, held until 19 Nov 2026 with the Rs 1,500 owed so far explained.
+- Run timing: every model call and tool is now timed in `run.json`. The live run took 68
+  seconds; model calls took 3–7 seconds each and tools under 0.1 seconds, so speed comes
+  from fewer turns.
+- 42 offline tests.

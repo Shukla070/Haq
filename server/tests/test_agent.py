@@ -82,6 +82,72 @@ class AgentLoopTest(unittest.TestCase):
         self.assertEqual(agent.LAST_TURN, fake.requests[-1]["input"][-1]["content"])
 
 
+WAIT_PATH = HAPPY_PATH[:10] + [
+    call("check_escalation", complained_on="2026-10-20", bank_replied_on="", satisfied=False),
+    HAPPY_PATH[-1],
+    call("hold_case", message="Your bank has until 19 Nov 2026 to reply. Rs 1,500 is owed so far."),
+]
+
+
+class WaitingTest(unittest.TestCase):
+    def setUp(self):
+        self.workspace = Workspace()
+        self.case = sample_case()
+
+    def tearDown(self):
+        self.workspace.close()
+
+    def test_no_draft_while_the_bank_still_has_time_to_reply(self):
+        fake = FakeClient(WAIT_PATH)
+        result = agent.start(self.case, fake)
+        self.assertEqual("waiting", result["status"])
+        case = Case.load(self.case.id)
+        self.assertEqual("2026-11-19", case.data["hold"]["until"])
+        refused = case.data["drafts"][-1]
+        self.assertFalse(refused["passed"])
+        self.assertIn("call hold_case", refused["problems"][0])
+
+    def test_hold_is_refused_when_a_complaint_is_due(self):
+        hold = call("hold_case", message="Wait for the bank.")
+        result = agent.start(self.case, FakeClient(HAPPY_PATH[:-1] + [hold, HAPPY_PATH[-1]]))
+        self.assertEqual("draft_ready", result["status"])
+        self.assertIsNone(Case.load(self.case.id).data["hold"])
+        run = json.loads((self.case.folder / "run.json").read_text(encoding="utf-8"))
+        self.assertIn("a complaint is due now", run["turns"][-2]["error"])
+
+    def test_a_hold_message_with_a_made_up_amount_is_refused(self):
+        bad = call("hold_case", message="Wait for the bank. You are owed Rs 9,999.")
+        result = agent.start(self.case, FakeClient(WAIT_PATH[:-1] + [bad, WAIT_PATH[-1]]))
+        self.assertEqual("waiting", result["status"])
+        run = json.loads((self.case.folder / "run.json").read_text(encoding="utf-8"))
+        self.assertIn("9999", run["turns"][-2]["error"])
+
+    def test_a_resumed_run_clears_the_hold(self):
+        fake = FakeClient(WAIT_PATH)
+        agent.start(self.case, fake)
+        fake.script = [call("ask_user", question="Has the bank replied?", why="complaint_history")]
+        result = agent.resume(Case.load(self.case.id), fake, "The customer answered: no reply yet")
+        self.assertEqual("needs_input", result["status"])
+        self.assertIsNone(Case.load(self.case.id).data["hold"])
+
+
+class TimingTest(unittest.TestCase):
+    def setUp(self):
+        self.workspace = Workspace()
+        self.case = sample_case()
+
+    def tearDown(self):
+        self.workspace.close()
+
+    def test_each_turn_and_the_run_are_timed(self):
+        result = agent.start(self.case, FakeClient(["thinking", *HAPPY_PATH]))
+        self.assertIn("seconds", result)
+        run = json.loads((self.case.folder / "run.json").read_text(encoding="utf-8"))
+        self.assertTrue(all("model_seconds" in turn for turn in run["turns"]))
+        self.assertTrue(all("tool_seconds" in turn for turn in run["turns"] if turn["tool"]))
+        self.assertEqual(result["seconds"], run["seconds"])
+
+
 class VerifierTest(unittest.TestCase):
     def setUp(self):
         self.workspace = Workspace()

@@ -81,6 +81,7 @@ class Case:
                 "questions": [],
                 "drafts": [],
                 "referral": None,
+                "hold": None,
                 "audit": [],
             }
         )
@@ -183,4 +184,5 @@ class Case:
             "entitlement": self.data["entitlement"],
             "open_questions": [q for q in self.data["questions"] if not q.get("answer")],
             "drafts": len(self.data["drafts"]),
+            "hold": self.data.get("hold"),
         }

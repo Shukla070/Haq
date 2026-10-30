@@ -24,6 +24,10 @@ def show(case: Case) -> None:
     question = next((q for q in reversed(case.data["questions"]) if not q.get("answer")), None)
     if question:
         print("\nQUESTION FOR THE CUSTOMER:\n" + question["question"])
+    hold = case.data.get("hold")
+    if hold:
+        until = f" until {hold['until']}" if hold["until"] else ""
+        print(f"\nON HOLD ({hold['status']}{until}):\n" + hold["message"])
     if case.data["referral"]:
         print("\nREFERRED:\n" + json.dumps(case.data["referral"], indent=2, ensure_ascii=False))
     passed = [d for d in case.data["drafts"] if d["passed"]]
