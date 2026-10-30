@@ -35,8 +35,9 @@ Other commands: `add`, `run`, `answer`, `show` (see `python -m haq --help`). Set
 uvicorn haq.api:app --reload
 ```
 
-`POST /cases`, `POST /cases/{id}/evidence`, `POST /cases/{id}/run`, `POST /cases/{id}/answer`,
-`GET /cases/{id}`. Interactive docs at `/docs`.
+Every request carries the app install's device token in `X-Haq-Device`; a case is visible
+only to the install that created it. The endpoints, the case view and the statuses the app
+relies on are in [docs/APP_API.md](../docs/APP_API.md). Interactive docs at `/docs`.
 
 ## Tests
 

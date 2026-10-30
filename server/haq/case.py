@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import re
 import secrets
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -41,6 +42,21 @@ def quote_in(quote: str, text: str) -> bool:
     return len(q) >= MIN_QUOTE and q in normalize(text)
 
 
+def write_json(path: Path, data: dict) -> None:
+    """Write via a temp file and swap it in, so a reader never sees half a file. On Windows
+    the swap fails while another request is reading the file, so it retries briefly."""
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    for attempt in range(20):
+        try:
+            tmp.replace(path)
+            return
+        except PermissionError:
+            if attempt == 19:
+                raise
+            time.sleep(0.05)
+
+
 def cases_dir() -> Path:
     path = config.data_dir() / "cases"
     path.mkdir(parents=True, exist_ok=True)
@@ -62,11 +78,13 @@ class Case:
         return cases_dir() / self.id
 
     @classmethod
-    def create(cls, story: str) -> Case:
+    def create(cls, story: str, owner: str | None = None) -> Case:
+        """A new case. owner is a hash of the app install's device token, or None (CLI)."""
         case_id = "case-" + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(3)
         case = cls(
             {
                 "id": case_id,
+                "owner": owner,
                 "created": now(),
                 "story": story.strip(),
                 "status": "new",
@@ -83,6 +101,7 @@ class Case:
                 "drafts": [],
                 "referral": None,
                 "hold": None,
+                "sent": [],
                 "audit": [],
             }
         )
@@ -98,10 +117,7 @@ class Case:
         return cls(json.loads(path.read_text(encoding="utf-8")))
 
     def save(self) -> None:
-        path = self.folder / "case.json"
-        tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(self.data, indent=2, ensure_ascii=False), encoding="utf-8")
-        tmp.replace(path)
+        write_json(self.folder / "case.json", self.data)
 
     def log(self, event: str, **details) -> None:
         self.data["audit"].append({"at": now(), "event": event, **details})

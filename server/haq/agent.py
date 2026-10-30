@@ -12,7 +12,7 @@ from pathlib import Path
 from openai import OpenAI
 
 from . import config, tools
-from .case import Case, now
+from .case import Case, now, write_json
 from .llm import plain
 
 INSTRUCTIONS = (Path(__file__).resolve().parent / "prompts" / "system.md").read_text(encoding="utf-8")
@@ -26,10 +26,7 @@ def _run_path(case: Case) -> Path:
 
 def _save_run(case: Case, run: dict) -> None:
     run["updated"] = now()
-    path = _run_path(case)
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(run, indent=2, ensure_ascii=False), encoding="utf-8")
-    tmp.replace(path)
+    write_json(_run_path(case), run)
 
 
 def _opening(case: Case) -> str:

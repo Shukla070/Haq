@@ -74,3 +74,20 @@ Dates are in IST.
   rather than the agent's paraphrase of them, which the model writes itself.
 - Live voice-only run after the fixes: draft verified first time, 13 turns, about 2 minutes.
 - 61 offline tests.
+- Started the Android app: Kotlin and Jetpack Compose, tested on a real phone. Server
+  work for it first:
+  - Each install sends a random device token; a case is visible only to the install that
+    created it (the server keeps only a hash). No accounts, so nothing ties a case to a
+    name or phone number.
+  - Case list for the home screen, friendly progress labels while the agent works, delete
+    a case, a 32 MB upload limit, and "mark as sent", which starts the bank's 30 days so
+    the app can remind the customer.
+  - Case ids from the URL are validated, so a crafted id cannot point outside the cases
+    folder.
+- Drove the API end to end like the app (create, upload a screenshot and two texts, run,
+  poll every second). The first try crashed: on Windows a save fails while another request
+  is reading the same file, and the crash left the case stuck at "working". Fixed: saves
+  retry briefly, each run gets its own thread apart from the request that started it, and
+  a run that fails is paused so the app can retry. Re-run: 82 polls, draft verified in 83
+  seconds, another device's token gets 404.
+- The app's API contract: [APP_API.md](APP_API.md). 69 offline tests.
