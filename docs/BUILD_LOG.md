@@ -58,4 +58,19 @@ Dates are in IST.
 - Run timing: every model call and tool is now timed in `run.json`. The live run took 68
   seconds; model calls took 3–7 seconds each and tools under 0.1 seconds, so speed comes
   from fewer turns.
-- 42 offline tests.
+- Amounts spoken as words: a new module, `haq/amounts.py`, reads them in English, Hinglish
+  ("saadhe chaar hazaar", "dedh sau") and Devanagari ("चार हज़ार पांच सौ", "४,५००"), and the
+  verifier now counts them. Built with Muse Code. In review we fixed two cases real Hindi
+  transcripts would hit: the danda (।) glued to the last word hid the amount, and "chaar
+  hazaar paise" (Hinglish for Rs 4,000) was dropped as paise.
+- A live voice-only case exposed two guardrail holes, both fixed:
+  - The agent marked items *proven* by quoting the customer's own voice note. A voice note
+    is the customer's account, like the story, so the case record now refuses facts from
+    voice notes; they become user statements.
+  - The transcriber misheard the fictional "Kaveri Bank" as a real bank's name, and the
+    agent addressed the complaint to it. The agent is now told that evidence wins when the
+    customer's words and the evidence disagree. Re-run: addressed to Kaveri Bank.
+- Amounts are now checked against the customer's own words (story, voice notes, answers)
+  rather than the agent's paraphrase of them, which the model writes itself.
+- Live voice-only run after the fixes: draft verified first time, 13 turns, about 2 minutes.
+- 61 offline tests.

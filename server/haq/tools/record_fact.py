@@ -6,7 +6,8 @@ DEFINITION = {
     "type": "function",
     "name": "record_fact",
     "description": "Record a fact for one checklist item, backed by an exact quote from one evidence item. "
-    "Refused unless the quote appears in that evidence's text.",
+    "Refused unless the quote appears in that evidence's text, and refused for the customer's own voice notes "
+    "(use record_user_statement for what they say).",
     "parameters": {
         "type": "object",
         "additionalProperties": False,

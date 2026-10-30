@@ -1,7 +1,8 @@
 """The case record: everything the agent has established about one dispute, saved as
 JSON under <data_dir>/cases/<case_id>/. Code, not the model, enforces its rules:
 
-- a fact is accepted only if its quote appears in the evidence it cites,
+- a fact is accepted only if its quote appears in the evidence it cites, and never from
+  the customer's own voice note, which is their account of events, not proof,
 - the checklist comes from the rule pack, never from the model,
 - what the user says without evidence is kept apart, as a user statement.
 """
@@ -141,6 +142,12 @@ class Case:
     def record_fact(self, item: str, evidence_id: str, quote: str, claim: str) -> dict:
         self._require_item(item)
         evidence = self.evidence(evidence_id)
+        if evidence.get("kind") == "voice":
+            # The customer's own voice note is their account of events, like the story: not proof.
+            self.log("fact_refused", item=item, evidence_id=evidence_id, reason="voice note")
+            raise CaseError(
+                f"{evidence_id} is the customer's own voice note, not proof: record it with record_user_statement"
+            )
         if not quote_in(quote, evidence.get("text", "")):
             self.log("fact_refused", item=item, evidence_id=evidence_id, quote=quote)
             raise CaseError(

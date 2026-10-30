@@ -7,7 +7,7 @@ the agent, and the agent cannot skip it. A draft passes only if:
 - every cited fact exists, and every checklist item is proven, stated by the customer, or
   named as a gap,
 - every rupee amount in the body comes from the evidence, the customer, or the computed
-  entitlement,
+  entitlement (amounts spoken as words count),
 - every cited rule's source is named in the body, and every circular or section
   reference in the body belongs to a cited rule,
 - the body contains no sensitive numbers and no text flagged as an injection attempt.
@@ -18,6 +18,7 @@ from __future__ import annotations
 import re
 
 from . import guard, rules
+from .amounts import spoken_amounts
 from .case import Case, normalize
 
 _AMOUNT = re.compile(r"(?:₹|\bRs\.?|\bINR)\s*([\d,]+(?:\.\d{1,2})?)", re.IGNORECASE)
@@ -39,22 +40,26 @@ def _amounts(text: str, pattern: re.Pattern = _AMOUNT) -> set:
 
 
 def unknown_amounts(case: Case, text: str) -> list:
-    """Rupee amounts in the text that come from neither the evidence, the customer's
-    statements, nor the computed entitlement. Used for drafts and for hold messages."""
+    """Rupee amounts in the text that come from neither the evidence, the customer's own
+    words, nor the computed entitlement. Used for drafts and for hold messages."""
     data = case.data
+    # The customer's own words (story, voice notes, answers), not the agent's paraphrase of them
+    # in user statements, which the model writes and could put any amount into.
+    supporting = [f["quote"] for f in data["facts"]]
+    supporting += [e.get("text", "") for e in data["evidence"] if e.get("kind") == "voice"]
+    supporting += [q["answer"] for q in data["questions"] if q.get("answer")]
+    supporting.append(data.get("story", ""))
     allowed = set()
-    for fact in data["facts"]:
-        allowed |= _amounts(fact["quote"], _NUMBER)
-    for statement in data["user_statements"]:
-        allowed |= _amounts(statement["statement"], _NUMBER)
-    allowed |= _amounts(data.get("story", ""), _NUMBER)
+    for source in supporting:
+        # Voice notes give amounts as words ("saadhe chaar hazaar"), so those count too.
+        allowed |= _amounts(source, _NUMBER) | spoken_amounts(source)
     if data["dispute_type"]:
         allowed.add(str(rules.load(data["dispute_type"])["compensation_per_day"]))
     entitlement = data.get("entitlement") or {}
     if entitlement:
         allowed.add(str(entitlement.get("compensation_owed")))
     return [
-        f"the amount Rs {amount} is not in the evidence, the customer's statements or the computed entitlement"
+        f"the amount Rs {amount} is not in the evidence, the customer's own words or the computed entitlement"
         for amount in sorted(_amounts(text) - allowed)
     ]
 

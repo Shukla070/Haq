@@ -39,6 +39,13 @@ class CaseRecordTest(unittest.TestCase):
         self.assertEqual([], self.case.data["facts"])
 
 
+    def test_a_voice_note_is_never_proof(self):
+        self.case.set_dispute(rules.load("upi_failed_debit"), "p2p")
+        self.case.add_evidence({"kind": "voice", "text": "I sent four thousand five hundred rupees on UPI."})
+        with self.assertRaisesRegex(CaseError, "record_user_statement"):
+            self.case.record_fact("debit", "E4", "I sent four thousand five hundred rupees", "debited")
+
+
 class AgentLoopTest(unittest.TestCase):
     def setUp(self):
         self.workspace = Workspace()
@@ -173,6 +180,21 @@ class VerifierTest(unittest.TestCase):
     def test_an_amount_quoted_without_a_currency_sign_is_allowed(self):
         self.case.record_fact("not_reversed", "E3", "Closing balance as on 27-10-2026: 22,004.50", "balance")
         self.draft["body"] = GOOD_BODY + " My closing balance on 27 October was Rs 22,004.50."
+        self.assertEqual([], verify.check(self.case, self.draft))
+
+    def test_an_amount_spoken_as_words_is_allowed(self):
+        self.case.add_evidence({"kind": "voice", "text": "Bank ne bola tha do hazaar teen sau wapas aayenge."})
+        self.draft["body"] = GOOD_BODY + " The bank told me Rs 2,300 would be returned."
+        self.assertEqual([], verify.check(self.case, self.draft))
+
+    def test_an_amount_only_in_the_agents_paraphrase_is_refused(self):
+        self.case.record_user_statement("not_reversed", "The bank promised Rs 7,000.")
+        self.draft["body"] = GOOD_BODY + " The bank promised me Rs 7,000."
+        self.assertTrue(any("7000" in p for p in verify.check(self.case, self.draft)))
+
+    def test_an_amount_in_the_customers_answer_is_allowed(self):
+        self.case.data["questions"].append({"question": "How much?", "why": "debit", "answer": "Rs 7,000"})
+        self.draft["body"] = GOOD_BODY + " The bank promised me Rs 7,000."
         self.assertEqual([], verify.check(self.case, self.draft))
 
     def test_a_citation_from_memory_is_refused(self):
