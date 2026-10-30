@@ -108,6 +108,18 @@ class VoiceTest(TestCase):
                     transcribe(src)
             self.assertIn("ffmpeg", str(raised.exception).lower())
 
+    def test_a_silent_note_asks_the_customer_to_record_again(self) -> None:
+        with TemporaryDirectory() as tmp:
+            wav = Path(tmp) / "note.wav"
+            _write_wav(wav)
+            with (
+                patch.dict(os.environ, {"MODEL_API_KEY": "test-key"}, clear=False),
+                patch("haq.voice.httpx.post", return_value=_ok_response("  ")),
+            ):
+                with self.assertRaises(CaseError) as raised:
+                    transcribe(wav)
+            self.assertIn("record it again", str(raised.exception))
+
     def test_400_becomes_case_error(self) -> None:
         with TemporaryDirectory() as tmp:
             wav = Path(tmp) / "note.wav"

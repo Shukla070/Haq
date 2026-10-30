@@ -21,4 +21,14 @@ object Device {
         prefs.edit().putString(KEY, token).apply()
         return token
     }
+
+    /** The customer's name for signing complaints, remembered for the next case. */
+    fun name(context: Context): String =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(NAME, null).orEmpty()
+
+    fun saveName(context: Context, name: String) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(NAME, name).apply()
+    }
+
+    private const val NAME = "customer_name"
 }

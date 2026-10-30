@@ -46,6 +46,7 @@ def main(argv: list | None = None) -> int:
     new.add_argument("story")
     new.add_argument("files", nargs="*")
     new.add_argument("--turns", type=int, default=25)
+    new.add_argument("--name", default="", help="the customer's name, to sign the complaint")
     add = commands.add_parser("add")
     add.add_argument("case_id")
     add.add_argument("file")
@@ -65,7 +66,7 @@ def main(argv: list | None = None) -> int:
         return 0
     client = make_client()
     if args.command == "new":
-        case = Case.create(args.story)
+        case = Case.create(args.story, name=args.name)
         for file in args.files:
             evidence.add(case, Path(file), client)
         print(f"Case {case.id}: {len(case.data['evidence'])} evidence item(s)", file=sys.stderr)

@@ -17,8 +17,8 @@ class HaqApi(private val baseUrl: String, private val device: String) {
 
     fun listCases(): List<CaseCard> = JSONArray(request("GET", "/cases")).objects().map(CaseCard::from)
 
-    fun createCase(story: String): CaseView =
-        CaseView.from(JSONObject(request("POST", "/cases", JSONObject().put("story", story))))
+    fun createCase(story: String, name: String): CaseView =
+        CaseView.from(JSONObject(request("POST", "/cases", JSONObject().put("story", story).put("name", name))))
 
     fun getCase(id: String): CaseView = CaseView.from(JSONObject(request("GET", "/cases/$id")))
 

@@ -122,3 +122,12 @@ Dates are in IST.
   together) and from text: a case with no typed story, only a spoken account and the
   screenshot, ended in a verified complaint to Kaveri Bank (Rs 1,700, 17 days late) in
   about 100 seconds. The voice note's claims stayed the customer's statements.
+- Complaints are signed with the customer's name instead of "Customer". The app asks for
+  it once ("as your bank knows it") and remembers it on the phone; the server keeps it on
+  the case. Because the name goes into the agent's prompt, it is limited to letters (any
+  script, so Devanagari names work), spaces and . ' -, and refused if it reads like an
+  instruction. The verifier refuses a draft that is not signed with it. Live run: the
+  agent asked whether the customer had already complained, then the draft was verified
+  first time and signed "Meera Iyer".
+- A voice note with no speech now asks the customer to record it again, instead of
+  showing "missing transcript". 74 offline tests.

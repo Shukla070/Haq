@@ -58,6 +58,7 @@ PROGRESS = {
 
 class NewCase(BaseModel):
     story: str
+    name: str = ""  # the customer's name, to sign the complaint
 
 
 class Answer(BaseModel):
@@ -177,7 +178,11 @@ def create_case(body: NewCase, x_haq_device: str | None = Header(None)) -> dict:
     owner = _owner(x_haq_device)
     if not body.story.strip():
         raise HTTPException(status_code=422, detail="tell us what happened")
-    return _view(Case.create(body.story, owner=owner))
+    try:
+        case = Case.create(body.story, owner=owner, name=body.name)
+    except CaseError as problem:
+        raise HTTPException(status_code=422, detail=str(problem)) from problem
+    return _view(case)
 
 
 @app.get("/cases")

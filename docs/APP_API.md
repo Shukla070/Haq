@@ -22,7 +22,7 @@ means losing access to its cases.
 | Method and path | Body | Returns |
 |---|---|---|
 | `GET /health` | | `{ok, model}` |
-| `POST /cases` | JSON `{story}` | the case view |
+| `POST /cases` | JSON `{story, name}`; `name` signs the complaint (letters, spaces, `.` `'` `-`; up to 80) | the case view |
 | `GET /cases` | | the home list: `[{id, created, status, running, title, dispute_type, compensation_owed, until}]`, newest first |
 | `GET /cases/{id}` | | the case view; poll it every 2–3 s while `running` |
 | `POST /cases/{id}/evidence` | multipart: `file`, optional `note` | `{id, kind, original_name, masked, instruction_like}`. Screenshots and PDFs are transcribed, voice notes (`.m4a`, `.ogg`, `.wav`, ...) transcribed. Max 32 MB (**413**); unreadable file **422**. Takes a few seconds. |

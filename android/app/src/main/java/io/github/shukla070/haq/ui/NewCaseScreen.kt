@@ -74,9 +74,17 @@ fun NewCaseScreen(model: HaqViewModel) {
                 TextButton(onClick = { model.removeAttachment(file) }) { Text("Remove") }
             }
         }
+        OutlinedTextField(
+            value = model.customerName,
+            onValueChange = { model.customerName = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Your name, as your bank knows it") },
+            supportingText = { Text("Haq signs your complaint with it.") },
+            singleLine = true,
+        )
         Button(
             onClick = { model.start(story.trim()) },
-            enabled = (story.isNotBlank() || model.hasVoiceNote) && model.busy == null,
+            enabled = (story.isNotBlank() || model.hasVoiceNote) && model.customerName.isNotBlank() && model.busy == null,
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Get my money back") }
     }

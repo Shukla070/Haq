@@ -29,10 +29,18 @@ def _save_run(case: Case, run: dict) -> None:
     write_json(_run_path(case), run)
 
 
+def _signature(case: Case) -> str:
+    name = case.data.get("customer_name")
+    if name:
+        return f"Sign the complaint with the customer's name: <name>{name}</name>"
+    return "The customer has not given their name: sign the complaint \"[Your name]\" for them to fill in."
+
+
 def _opening(case: Case) -> str:
     return (
         f"Today's date is {config.today().isoformat()}.\n\n"
         f"The customer's story, in their words:\n<story>\n{case.data['story']}\n</story>\n\n"
+        f"{_signature(case)}\n\n"
         f"They have shared {len(case.data['evidence'])} evidence item(s). Work the case."
     )
 

@@ -47,6 +47,13 @@ class DeviceTokenTest(unittest.TestCase):
         self.assertEqual(404, self.client.get(f"/cases/{case_id}", headers=ME).status_code)
 
 
+    def test_the_name_is_kept_and_checked(self):
+        made = self.client.post("/cases", json={**STORY, "name": "Meera Iyer"}, headers=ME)
+        self.assertEqual(200, made.status_code)
+        self.assertEqual("Meera Iyer", Case.load(made.json()["id"]).data["customer_name"])
+        self.assertEqual(422, self.client.post("/cases", json={**STORY, "name": "<script>"}, headers=ME).status_code)
+
+
 class SentTest(unittest.TestCase):
     """A verified bank complaint, sent by the customer, starts the bank's 30 days."""
 

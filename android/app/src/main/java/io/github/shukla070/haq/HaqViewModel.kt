@@ -118,11 +118,16 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
     /** True when the customer can start without typing: they told the story in a voice note. */
     val hasVoiceNote get() = newCaseAttachments.any { it.mimeType.startsWith("audio/") }
 
+    /** The name the complaint is signed with; remembered on this phone only. */
+    var customerName by mutableStateOf(Device.name(app))
+
     /** Create the case, upload each piece of evidence, start the agent, and watch it work. */
     fun start(story: String) = work("Creating your case") {
         val files = newCaseAttachments.toList()
         val told = story.ifBlank { "I explained what happened in my voice note." }
-        val case = io { api.createCase(told) }
+        val name = customerName.trim()
+        val case = io { api.createCase(told, name) }
+        Device.saveName(getApplication(), name)
         val resolver = getApplication<Application>().contentResolver
         files.forEachIndexed { index, file ->
             busy = "Reading ${file.name} (${index + 1} of ${files.size})"

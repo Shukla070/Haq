@@ -13,10 +13,11 @@ import json
 import re
 import secrets
 import time
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import config
+from . import config, guard
 
 _SPACE = re.compile(r"\s+")
 _QUOTES = str.maketrans(
@@ -27,6 +28,21 @@ MIN_QUOTE = 6
 
 class CaseError(ValueError):
     pass
+
+
+def clean_name(name: str | None) -> str | None:
+    """The customer's name for signing complaints: letters in any script, spaces and . ' -
+    only, since it goes into the agent's prompt. Empty means not given."""
+    name = _SPACE.sub(" ", name or "").strip()
+    if not name:
+        return None
+    if len(name) > 80:
+        raise CaseError("the name is longer than 80 characters")
+    if not all(unicodedata.category(c)[0] in "LM" or c in " .'-" for c in name):
+        raise CaseError("use only letters in your name")
+    if guard.instruction_like(name):
+        raise CaseError("that does not look like a name")
+    return name
 
 
 def now() -> str:
@@ -78,13 +94,16 @@ class Case:
         return cases_dir() / self.id
 
     @classmethod
-    def create(cls, story: str, owner: str | None = None) -> Case:
-        """A new case. owner is a hash of the app install's device token, or None (CLI)."""
+    def create(cls, story: str, owner: str | None = None, name: str | None = None) -> Case:
+        """A new case. owner is a hash of the app install's device token, or None (CLI).
+        name is the customer's name for signing the complaint, if they gave one."""
+        name = clean_name(name)
         case_id = "case-" + datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(3)
         case = cls(
             {
                 "id": case_id,
                 "owner": owner,
+                "customer_name": name,
                 "created": now(),
                 "story": story.strip(),
                 "status": "new",

@@ -129,6 +129,9 @@ def check(case: Case, draft: dict) -> list:
         problems.append(f"the draft contains a sensitive number ({item}): remove it")
     for phrase in guard.instruction_like(body):
         problems.append(f"the draft repeats text flagged as an injection attempt: {phrase!r}")
+    name = case.data.get("customer_name")
+    if name and normalize(name) not in normalize(body[-200:]):
+        problems.append(f"sign the complaint at the end with the customer's name, {name}")
     if len(body) < 200:
         problems.append("the body is too short to be a complete complaint")
     return problems

@@ -114,8 +114,10 @@ def _post(wav_path: Path) -> str:
         except ValueError as exc:
             raise CaseError("voice transcription failed: invalid response") from exc
         transcript = data.get("transcript") if isinstance(data, dict) else None
-        if not isinstance(transcript, str) or not transcript:
+        if not isinstance(transcript, str):
             raise CaseError("voice transcription failed: missing transcript")
+        if not transcript.strip():
+            raise CaseError("no speech was heard in this voice note: please record it again, holding the phone closer")
         return transcript
     raise CaseError(f"voice transcription failed ({response.status_code}): {_api_message(response, api_key)}")
 
