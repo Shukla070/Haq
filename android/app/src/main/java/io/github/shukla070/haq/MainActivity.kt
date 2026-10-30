@@ -1,5 +1,6 @@
 package io.github.shukla070.haq
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -17,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.shukla070.haq.ui.CaseScreen
 import io.github.shukla070.haq.ui.HomeScreen
@@ -24,14 +26,26 @@ import io.github.shukla070.haq.ui.NewCaseScreen
 import io.github.shukla070.haq.ui.theme.HaqTheme
 
 class MainActivity : ComponentActivity() {
+    private lateinit var model: HaqViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        model = ViewModelProvider(this)[HaqViewModel::class.java]
+        // Only a fresh share: not after rotation, nor when reopened from recents with the old intent.
+        val fromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        if (savedInstanceState == null && !fromHistory) model.receiveShare(intent)
         enableEdgeToEdge()
         setContent {
             HaqTheme {
                 HaqApp()
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        model.receiveShare(intent)
     }
 }
 

@@ -39,6 +39,8 @@ Debug builds may use plain http only to `127.0.0.1`; release builds use https on
 | `Models.kt` | The case view and home list, parsed from JSON |
 | `Device.kt` | The install's random device token, in private app storage |
 | `HaqViewModel.kt` | App state, actions, and polling while the agent works |
+| `SharedFiles.kt` | "Share to Haq": copies shared screenshots, files and SMS text into private cache |
 | `ui/HomeScreen.kt` | Your cases |
-| `ui/NewCaseScreen.kt` | Tell the story, attach screenshots and files |
+| `ui/NewCaseScreen.kt` | Tell the story (typed or as a voice note), attach screenshots and files |
 | `ui/CaseScreen.kt` | Progress, then the screen for each status |
+| `ui/VoiceRecorder.kt` | Records a voice note (m4a, mono) after asking for the microphone |

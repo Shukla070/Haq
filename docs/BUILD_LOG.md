@@ -104,3 +104,21 @@ Dates are in IST.
   to `adb reverse`, which gives the device the laptop's server at its own 127.0.0.1 and
   works the same for a phone on USB. Debug builds allow plain http only to 127.0.0.1;
   release builds are https only.
+- Voice notes and "Share to Haq" in the app, built with Muse Code from our brief:
+  - Record a voice note on the new-case screen, or answer the agent's question with one.
+    A case can be started from a voice note alone, with nothing typed.
+  - Haq appears in Android's share sheet for screenshots, PDFs, audio and text. A bank SMS
+    shared as text becomes evidence ("Shared message 1.txt"), not the customer's story.
+    Shared files are copied into private storage at once, because the sending app's
+    permission to read them can expire.
+  - Photo-picker names like "36.png" are shown as "Screenshot 1.png".
+- Review and testing on the emulator found two bugs the compiler couldn't:
+  - Tapping Record made 2,474 empty files. Inside the recorder's setup block, `start()`
+    called the screen's own `start()` function instead of the recorder's, so each start
+    opened another recorder until the system refused. Renamed, and a recorder that fails
+    to start is now released.
+  - A share was attached again after rotating the phone or reopening Haq from recents.
+- Tested by sharing from the Files app (one file, then a screenshot and a voice note
+  together) and from text: a case with no typed story, only a spoken account and the
+  screenshot, ended in a verified complaint to Kaveri Bank (Rs 1,700, 17 days late) in
+  about 100 seconds. The voice note's claims stayed the customer's statements.

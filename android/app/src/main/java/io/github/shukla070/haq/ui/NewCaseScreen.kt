@@ -20,28 +20,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import io.github.shukla070.haq.Attachment
 import io.github.shukla070.haq.HaqViewModel
 
-/** Tell the story and attach proof. First cut: typing and file pickers; voice recording comes next. */
+/** Tell the story, attach proof, or record a voice note. Shared files arrive already attached. */
 @Composable
 fun NewCaseScreen(model: HaqViewModel) {
     var story by rememberSaveable { mutableStateOf("") }
-    val attachments = remember { mutableStateListOf<Attachment>() }
+    val attachments = model.newCaseAttachments
     val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(5)) { uris ->
-        uris.forEach { attachments += model.attachment(it) }
+        uris.forEach { model.addAttachment(model.attachment(it)) }
     }
     val pickFiles = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        uris.forEach { attachments += model.attachment(it) }
+        uris.forEach { model.addAttachment(model.attachment(it)) }
     }
 
     Column(
@@ -70,15 +67,16 @@ fun NewCaseScreen(model: HaqViewModel) {
                 Text("Add files")
             }
         }
+        VoiceRecorder(onFinished = model::addVoiceNote, enabled = model.busy == null)
         attachments.forEach { file ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(file.name, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                TextButton(onClick = { attachments.remove(file) }) { Text("Remove") }
+                TextButton(onClick = { model.removeAttachment(file) }) { Text("Remove") }
             }
         }
         Button(
-            onClick = { model.start(story.trim(), attachments.toList()) },
-            enabled = story.isNotBlank() && model.busy == null,
+            onClick = { model.start(story.trim()) },
+            enabled = (story.isNotBlank() || model.hasVoiceNote) && model.busy == null,
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Get my money back") }
     }

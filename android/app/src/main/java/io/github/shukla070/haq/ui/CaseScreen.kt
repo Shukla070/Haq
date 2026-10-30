@@ -159,6 +159,8 @@ private fun Question(model: HaqViewModel, question: String) {
     Button(onClick = { model.answer(answer.trim()) }, enabled = answer.isNotBlank() && model.busy == null) {
         Text("Send answer")
     }
+    Text("Or answer with a voice note", style = MaterialTheme.typography.bodyMedium)
+    VoiceRecorder(onFinished = model::answerWithVoice, enabled = model.busy == null)
 }
 
 @Composable
