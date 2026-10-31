@@ -139,3 +139,17 @@ Dates are in IST.
   the customer's original, and masking only covers the text the agent reads, so a file with a
   sensitive number stays back and the app says why; voice notes stay back too. The server
   enforces this. Not yet tried with a real email app.
+
+## 2026-10-31
+
+- Reminders: a waiting case now notifies the customer at 10 am on the bank's reply date, using
+  WorkManager, which is built to survive a reboot (not yet tested). The text names no bank or
+  amount because it can show on a locked phone. The app asks for the notification permission at the moment it is needed, and
+  says to use a calendar if refused.
+- The reminder needed somewhere to lead: a waiting case had no next step at all. It now asks
+  "Has the bank fixed this?". Yes resolves the case. No restarts the agent with today's date.
+- Tested on the emulator with the date moved on: the reminder fired and opened the right case;
+  before the bank's 30 days were up the agent put the case back on hold and the reminder
+  moved to the new date; after them, it asked whether the bank had replied, then wrote an
+  Ombudsman complaint for Rs 3,800 (38 days late, file by 11 Feb 2027), verified first time.
+  83 offline tests.

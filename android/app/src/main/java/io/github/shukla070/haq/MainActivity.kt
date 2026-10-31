@@ -33,7 +33,10 @@ class MainActivity : ComponentActivity() {
         model = ViewModelProvider(this)[HaqViewModel::class.java]
         // Only a fresh share: not after rotation, nor when reopened from recents with the old intent.
         val fromHistory = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
-        if (savedInstanceState == null && !fromHistory) model.receiveShare(intent)
+        if (savedInstanceState == null && !fromHistory) {
+            model.receiveShare(intent)
+            model.receiveReminder(intent)
+        }
         enableEdgeToEdge()
         setContent {
             HaqTheme {
@@ -46,6 +49,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         model.receiveShare(intent)
+        model.receiveReminder(intent)
     }
 }
 

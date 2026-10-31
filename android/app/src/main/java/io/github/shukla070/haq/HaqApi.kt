@@ -33,6 +33,12 @@ class HaqApi(private val baseUrl: String, private val device: String) {
 
     fun markSent(id: String): CaseView = CaseView.from(JSONObject(request("POST", "/cases/$id/sent", JSONObject())))
 
+    fun fixed(id: String): CaseView = CaseView.from(JSONObject(request("POST", "/cases/$id/fixed")))
+
+    fun notFixed(id: String) {
+        request("POST", "/cases/$id/not-fixed")
+    }
+
     fun delete(id: String) {
         request("DELETE", "/cases/$id")
     }

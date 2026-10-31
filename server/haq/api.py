@@ -273,6 +273,47 @@ def answer(case_id: str, body: Answer, x_haq_device: str | None = Header(None)) 
     return {"case_id": case_id, "running": True}
 
 
+def _waiting_on_bank(case_id: str, device: str | None) -> Case:
+    case = _load(case_id, device)
+    if case.id in _running or case.data["status"] not in ("waiting", "sent"):
+        raise HTTPException(status_code=409, detail="this case is not waiting on the bank")
+    return case
+
+
+@app.post("/cases/{case_id}/fixed")
+def fixed(case_id: str, x_haq_device: str | None = Header(None)) -> dict:
+    """The customer says the bank fixed it, so the case is over."""
+    case = _waiting_on_bank(case_id, x_haq_device)
+    case.data["status"] = "resolved"
+    case.data["hold"] = {
+        "status": "resolved",
+        "until": None,
+        "reason": "The customer says the bank fixed this.",
+        "message": "You told Haq the bank fixed this. Keep the bank's reply in case you need it later.",
+        "set": now(),
+    }
+    case.log("fixed")
+    case.save()
+    return _view(case)
+
+
+@app.post("/cases/{case_id}/not-fixed", status_code=202)
+def not_fixed(case_id: str, x_haq_device: str | None = Header(None)) -> dict:
+    """The customer says the bank has not fixed it, so the agent looks at the next step."""
+    case = _waiting_on_bank(case_id, x_haq_device)
+    sent = [s["on"] for s in case.data.get("sent", []) if s["step"] == "bank"]
+    complained = f" They sent their complaint to the bank on {sent[-1]}." if sent else ""
+    case.log("not_fixed")
+    case.save()
+    _schedule(
+        case_id,
+        f"Today's date is {config.today().isoformat()}. The customer says the bank has not fixed this.{complained} "
+        "Call calculate_entitlement and check_escalation again with today's date. If you need to know whether "
+        "or when the bank replied, ask the customer.",
+    )
+    return {"case_id": case_id, "running": True}
+
+
 @app.post("/cases/{case_id}/sent")
 def mark_sent(case_id: str, body: Sent, x_haq_device: str | None = Header(None)) -> dict:
     """The customer sent the verified draft themselves. A bank complaint starts the bank's

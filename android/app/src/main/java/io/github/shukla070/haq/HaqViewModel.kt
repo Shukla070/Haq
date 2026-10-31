@@ -72,7 +72,15 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
         poll(id)
     }
 
-    fun refresh() = work(null) { cases = io { api.listCases() } }
+    fun refresh() = work(null) {
+        cases = io { api.listCases() }
+        Reminders.sync(getApplication(), cases)
+    }
+
+    /** A tap on a reminder opens its case. */
+    fun receiveReminder(intent: Intent) {
+        intent.getStringExtra(Reminders.CASE_ID)?.let(::open)
+    }
 
     fun attachment(uri: Uri): Attachment {
         val resolver = getApplication<Application>().contentResolver
@@ -165,6 +173,13 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
         api.markSent(id)
     }
 
+    fun bankFixed() = caseAction("Saving") { id -> api.fixed(id) }
+
+    fun bankNotFixed() = caseAction("Looking at your next step") { id ->
+        api.notFixed(id)
+        null
+    }
+
     /** Fetch the proof the email can carry into the cache, where the email app can read it. */
     fun emailProof(onReady: (List<Uri>) -> Unit) = work("Attaching your proof") {
         val case = current ?: return@work
@@ -212,7 +227,12 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
     private fun caseAction(label: String, action: (String) -> CaseView?) = work(label) {
         val id = (screen as? Screen.Case)?.id ?: return@work
         val updated = io { action(id) }
-        if (updated != null) current = updated else poll(id)
+        if (updated != null) show(updated) else poll(id)
+    }
+
+    private fun show(view: CaseView) {
+        current = view
+        Reminders.update(getApplication(), view.id, view.status, view.hold?.until)
     }
 
     private fun poll(id: String) {
@@ -221,7 +241,7 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
             while (isActive) {
                 try {
                     val view = io { api.getCase(id) }
-                    current = view
+                    show(view)
                     error = null
                     if (!view.running) break
                 } catch (e: Exception) {

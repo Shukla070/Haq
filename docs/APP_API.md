@@ -30,6 +30,8 @@ means losing access to its cases.
 | `POST /cases/{id}/run` | | **202** `{case_id, running: true}`; **409** if already running |
 | `POST /cases/{id}/answer` | JSON `{text}` | **202**; answers the open question and resumes the agent |
 | `POST /cases/{id}/sent` | JSON `{on}` (YYYY-MM-DD, empty for today) | the case view; the customer sent the verified draft themselves. A bank complaint puts the case in `waiting` until the bank's reply deadline. **409** if there is no verified draft. |
+| `POST /cases/{id}/fixed` | | the case view, now `resolved`; the customer says the bank fixed it. **409** unless `waiting` or `sent`. |
+| `POST /cases/{id}/not-fixed` | | **202**; the agent checks the next step with today's date. **409** unless `waiting` or `sent`. |
 | `DELETE /cases/{id}` | | `{deleted}`; the case and its evidence are removed from the server. **409** while running. |
 
 To answer with a voice note: upload it with `POST /evidence`, then `POST /answer` with
@@ -61,10 +63,10 @@ The fields the app uses:
 | `new` | evidence picker, then Run |
 | `working` | progress (`running` is true) |
 | `draft_ready` | the draft: amount owed, proven vs said, Copy / Send by email / Mark as sent |
-| `waiting` | countdown to `hold.until`, with `hold.message`; a reminder on that date |
+| `waiting` | countdown to `hold.until`, with `hold.message` and Fixed / Not fixed; a reminder at 10 am on that date |
 | `needs_input` | `question`, answered by text or voice |
 | `referred` | `referral`, with tap-to-call for 1930 and 14448 |
 | `resolved` | done |
 | `filed` | an Ombudsman complaint was sent |
-| `sent` | sent, and the bank's reply period has already passed |
+| `sent` | sent, and the bank's reply period has already passed; Fixed / Not fixed |
 | `paused` | something went wrong (API error, turn limit); offer Retry (`POST /run`) |

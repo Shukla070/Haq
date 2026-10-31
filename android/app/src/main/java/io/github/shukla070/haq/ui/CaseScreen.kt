@@ -1,12 +1,16 @@
 package io.github.shukla070.haq.ui
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,8 +32,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
 import io.github.shukla070.haq.CaseView
 import io.github.shukla070.haq.Draft
 import io.github.shukla070.haq.Evidence
@@ -44,6 +51,7 @@ import io.github.shukla070.haq.HaqViewModel
 import io.github.shukla070.haq.day
 import io.github.shukla070.haq.rupees
 import io.github.shukla070.haq.statusLabel
+import java.time.LocalDate
 
 @Composable
 fun CaseScreen(model: HaqViewModel, id: String) {
@@ -62,10 +70,10 @@ fun CaseScreen(model: HaqViewModel, id: String) {
             Working(case)
         } else {
             Text(statusLabel(case.status), style = MaterialTheme.typography.headlineSmall)
-            Owed(case)
+            if (case.status != "resolved") Owed(case)
             when (case.status) {
                 "draft_ready" -> case.draft?.let { DraftReady(model, it, case.evidence) }
-                "waiting", "resolved", "sent" -> case.hold?.let { Waiting(it.until, it.message) }
+                "waiting", "resolved", "sent" -> case.hold?.let { Waiting(model, case.status, it.until, it.message) }
                 "needs_input" -> Question(model, case.question ?: "")
                 "referred" -> case.referral?.let { Referred(it.reason, it.where) }
                 "filed" -> Text("You sent your complaint to the RBI Ombudsman. Keep its acknowledgement and reference number.")
@@ -162,9 +170,37 @@ private fun DraftReady(model: HaqViewModel, draft: Draft, evidence: List<Evidenc
 }
 
 @Composable
-private fun Waiting(until: String?, message: String) {
+private fun Waiting(model: HaqViewModel, status: String, until: String?, message: String) {
     until?.let { Text("Until ${day(it)}", style = MaterialTheme.typography.titleMedium) }
     Text(message, style = MaterialTheme.typography.bodyLarge)
+    if (status == "waiting" && until != null && LocalDate.parse(until) >= LocalDate.now()) ReminderNote(until)
+    if (status != "resolved") {
+        Text("Has the bank fixed this?", style = MaterialTheme.typography.titleMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = model::bankFixed, enabled = model.busy == null) { Text("Yes, it's fixed") }
+            OutlinedButton(onClick = model::bankNotFixed, enabled = model.busy == null) { Text("No, not fixed") }
+        }
+    }
+}
+
+/** Says when the reminder comes, asking once for the permission Android 13 and up needs. */
+@Composable
+private fun ReminderNote(until: String) {
+    val context = LocalContext.current
+    var allowed by remember { mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled()) }
+    var asked by rememberSaveable { mutableStateOf(false) }
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed = it }
+    LaunchedEffect(Unit) {
+        if (!allowed && !asked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            asked = true
+            ask.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+    Text(
+        if (allowed) "Haq will remind you on ${day(until)}."
+        else "Notifications are off, so Haq can't remind you. Put ${day(until)} in your calendar.",
+        style = MaterialTheme.typography.bodyMedium,
+    )
 }
 
 @Composable

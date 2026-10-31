@@ -1,4 +1,5 @@
 import unittest
+import unittest.mock
 
 from fastapi.testclient import TestClient
 
@@ -97,6 +98,47 @@ class EvidenceFileTest(unittest.TestCase):
 
     def test_unknown_evidence_is_not_found(self):
         self.assertEqual(404, self.client.get(f"/cases/{self.case_id}/evidence/E9/file", headers=ME).status_code)
+
+
+class OutcomeTest(unittest.TestCase):
+    """When the customer is waiting on the bank, they tell Haq how it went."""
+
+    def setUp(self):
+        self.workspace = Workspace()
+        self.client = TestClient(api.app)
+        self.case_id = self.client.post("/cases", json=STORY, headers=ME).json()["id"]
+
+    def tearDown(self):
+        self.workspace.close()
+
+    def _wait(self, sent=()):
+        case = Case.load(self.case_id)
+        case.data["status"] = "waiting"
+        case.data["sent"] = list(sent)
+        case.save()
+
+    def test_a_fixed_case_is_resolved(self):
+        self._wait()
+        view = self.client.post(f"/cases/{self.case_id}/fixed", headers=ME).json()
+        self.assertEqual("resolved", view["status"])
+        self.assertIsNone(view["hold"]["until"])
+
+    def test_not_fixed_restarts_the_agent_with_the_dates(self):
+        self._wait(sent=[{"step": "bank", "on": "2026-10-30"}])
+        with unittest.mock.patch.object(api, "_schedule") as schedule:
+            got = self.client.post(f"/cases/{self.case_id}/not-fixed", headers=ME)
+        self.assertEqual(202, got.status_code)
+        message = schedule.call_args.args[1]
+        self.assertIn("2026-10-30", message)
+        self.assertIn("check_escalation", message)
+
+    def test_only_a_case_waiting_on_the_bank(self):
+        self.assertEqual(409, self.client.post(f"/cases/{self.case_id}/fixed", headers=ME).status_code)
+        self.assertEqual(409, self.client.post(f"/cases/{self.case_id}/not-fixed", headers=ME).status_code)
+
+    def test_nobody_else_can_answer(self):
+        self._wait()
+        self.assertEqual(404, self.client.post(f"/cases/{self.case_id}/fixed", headers=SOMEONE_ELSE).status_code)
 
 
 class SentTest(unittest.TestCase):

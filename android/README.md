@@ -44,4 +44,5 @@ Debug builds may use plain http only to `127.0.0.1`; release builds use https on
 | `ui/HomeScreen.kt` | Your cases |
 | `ui/NewCaseScreen.kt` | Tell the story (typed or as a voice note), attach screenshots and files |
 | `ui/CaseScreen.kt` | Progress, then the screen for each status |
+| `Reminders.kt` | The notification on the bank's reply date, through WorkManager |
 | `ui/VoiceRecorder.kt` | Records a voice note (m4a, mono) after asking for the microphone |
