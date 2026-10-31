@@ -40,7 +40,7 @@ data class Hold(val until: String?, val message: String)
 
 data class Referral(val reason: String, val where: String)
 
-data class Evidence(val id: String, val kind: String, val name: String, val masked: Boolean, val flagged: Boolean)
+data class Evidence(val id: String, val kind: String, val name: String, val masked: Boolean, val flagged: Boolean, val attachable: Boolean)
 
 data class CaseView(
     val id: String,
@@ -69,6 +69,7 @@ data class CaseView(
                     name = e.str("original_name") ?: e.getString("id"),
                     masked = e.optBoolean("masked"),
                     flagged = (e.optJSONArray("instruction_like")?.length() ?: 0) > 0,
+                    attachable = e.optBoolean("attachable"),
                 )
             },
             entitlement = json.optJSONObject("entitlement")?.let { e ->

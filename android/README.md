@@ -2,7 +2,8 @@
 
 Kotlin and Jetpack Compose. Package `io.github.shukla070.haq`, Android 8.0 (API 26) and up.
 It talks to the Haq server described in [docs/APP_API.md](../docs/APP_API.md) and keeps no
-case data on the phone beyond its device token.
+case data on the phone beyond its device token, the customer's name, and proof waiting in
+the cache for the email app.
 
 ## Run it
 

@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.github.shukla070.haq.CaseView
 import io.github.shukla070.haq.Draft
+import io.github.shukla070.haq.Evidence
 import io.github.shukla070.haq.HaqViewModel
 import io.github.shukla070.haq.day
 import io.github.shukla070.haq.rupees
@@ -63,7 +64,7 @@ fun CaseScreen(model: HaqViewModel, id: String) {
             Text(statusLabel(case.status), style = MaterialTheme.typography.headlineSmall)
             Owed(case)
             when (case.status) {
-                "draft_ready" -> case.draft?.let { DraftReady(model, it) }
+                "draft_ready" -> case.draft?.let { DraftReady(model, it, case.evidence) }
                 "waiting", "resolved", "sent" -> case.hold?.let { Waiting(it.until, it.message) }
                 "needs_input" -> Question(model, case.question ?: "")
                 "referred" -> case.referral?.let { Referred(it.reason, it.where) }
@@ -124,8 +125,10 @@ private fun Owed(case: CaseView) {
 }
 
 @Composable
-private fun DraftReady(model: HaqViewModel, draft: Draft) {
+private fun DraftReady(model: HaqViewModel, draft: Draft, evidence: List<Evidence>) {
     val context = LocalContext.current
+    val attached = evidence.filter { it.attachable }.map { it.name }
+    val heldBack = evidence.filter { it.masked && it.kind != "voice" }.map { it.name }
     Text("To: ${draft.recipient}", style = MaterialTheme.typography.bodyMedium)
     Text(draft.subject, style = MaterialTheme.typography.titleMedium)
     Card {
@@ -139,7 +142,20 @@ private fun DraftReady(model: HaqViewModel, draft: Draft) {
     )
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = { copy(context, draft.subject + "\n\n" + draft.body) }) { Text("Copy") }
-        OutlinedButton(onClick = { email(context, draft) }) { Text("Send by email") }
+        OutlinedButton(
+            onClick = { model.emailProof { proof -> email(context, draft, proof) } },
+            enabled = model.busy == null,
+        ) { Text("Send by email") }
+    }
+    if (attached.isNotEmpty()) {
+        Text("The email attaches: ${attached.joinToString(", ")}.", style = MaterialTheme.typography.bodySmall)
+    }
+    if (heldBack.isNotEmpty()) {
+        Text(
+            "Not attached: ${heldBack.joinToString(", ")}. It shows a card number, Aadhaar or OTP. " +
+                "Cover that number, then attach it yourself.",
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
     Button(onClick = model::markSent, modifier = Modifier.fillMaxWidth()) { Text("I've sent it") }
     if (draft.nextSteps.isNotBlank()) Text("Next: ${draft.nextSteps}", style = MaterialTheme.typography.bodyMedium)
@@ -202,11 +218,21 @@ private fun copy(context: Context, text: String) {
     Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
 }
 
-/** Opens the customer's email app with the complaint filled in; they choose the address and send it. */
-private fun email(context: Context, draft: Draft) {
-    val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
-        .putExtra(Intent.EXTRA_SUBJECT, draft.subject)
-        .putExtra(Intent.EXTRA_TEXT, draft.body)
+/** Opens the customer's email app with the complaint and proof filled in; they choose the address and send it. */
+private fun email(context: Context, draft: Draft, proof: List<Uri>) {
+    val mailApp = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+    val intent = when (proof.size) {
+        0 -> mailApp
+        1 -> Intent(Intent.ACTION_SEND).putExtra(Intent.EXTRA_STREAM, proof[0])
+        else -> Intent(Intent.ACTION_SEND_MULTIPLE).putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(proof))
+    }
+    intent.putExtra(Intent.EXTRA_SUBJECT, draft.subject).putExtra(Intent.EXTRA_TEXT, draft.body)
+    if (proof.isNotEmpty()) {
+        intent.type = "*/*"
+        intent.selector = mailApp // only email apps, not every app that can receive a file
+        intent.clipData = ClipData.newRawUri("Proof", proof[0]).apply { proof.drop(1).forEach { addItem(ClipData.Item(it)) } }
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
     try {
         context.startActivity(intent)
     } catch (e: ActivityNotFoundException) {

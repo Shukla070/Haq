@@ -131,3 +131,11 @@ Dates are in IST.
   first time and signed "Meera Iyer".
 - A voice note with no speech now asks the customer to record it again, instead of
   showing "missing transcript". 74 offline tests.
+- Tested on a real phone (Nothing A059, Android 16): a Hinglish voice note, a screenshot and a
+  statement ended in a verified complaint for Rs 4,500 plus Rs 1,700, signed with the
+  customer's name. The USB tunnel dropped once when the phone reconnected, which the app
+  showed as "check your connection"; `adb reverse` has to be run again after that.
+- "Send by email" now attaches the proof, so the bank gets more than text. The stored file is
+  the customer's original, and masking only covers the text the agent reads, so a file with a
+  sensitive number stays back and the app says why; voice notes stay back too. The server
+  enforces this. Not yet tried with a real email app.

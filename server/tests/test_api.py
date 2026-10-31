@@ -54,6 +54,51 @@ class DeviceTokenTest(unittest.TestCase):
         self.assertEqual(422, self.client.post("/cases", json={**STORY, "name": "<script>"}, headers=ME).status_code)
 
 
+class EvidenceFileTest(unittest.TestCase):
+    """The customer's email can carry their proof, but not a file with a sensitive number."""
+
+    def setUp(self):
+        self.workspace = Workspace()
+        self.client = TestClient(api.app)
+        self.case_id = self.client.post("/cases", json=STORY, headers=ME).json()["id"]
+        evidence.add(Case.load(self.case_id), SAMPLE / "bank_sms.txt")
+        self.url = f"/cases/{self.case_id}/evidence/E1/file"
+
+    def tearDown(self):
+        self.workspace.close()
+
+    def _set(self, **fields):
+        case = Case.load(self.case_id)
+        case.data["evidence"][0].update(fields)
+        case.save()
+
+    def test_the_owner_gets_the_original_file(self):
+        self._set(masked=False)
+        got = self.client.get(self.url, headers=ME)
+        self.assertEqual(200, got.status_code)
+        self.assertEqual((SAMPLE / "bank_sms.txt").read_bytes(), got.content)
+        view = self.client.get(f"/cases/{self.case_id}", headers=ME).json()
+        self.assertTrue(view["evidence"][0]["attachable"])
+
+    def test_nobody_else_gets_it(self):
+        self._set(masked=False)
+        self.assertEqual(404, self.client.get(self.url, headers=SOMEONE_ELSE).status_code)
+        self.assertEqual(401, self.client.get(self.url).status_code)
+
+    def test_a_file_with_a_sensitive_number_stays_back(self):
+        self._set(masked=True)
+        self.assertEqual(409, self.client.get(self.url, headers=ME).status_code)
+        view = self.client.get(f"/cases/{self.case_id}", headers=ME).json()
+        self.assertFalse(view["evidence"][0]["attachable"])
+
+    def test_a_voice_note_stays_back(self):
+        self._set(masked=False, kind="voice")
+        self.assertEqual(409, self.client.get(self.url, headers=ME).status_code)
+
+    def test_unknown_evidence_is_not_found(self):
+        self.assertEqual(404, self.client.get(f"/cases/{self.case_id}/evidence/E9/file", headers=ME).status_code)
+
+
 class SentTest(unittest.TestCase):
     """A verified bank complaint, sent by the customer, starts the bank's 30 days."""
 

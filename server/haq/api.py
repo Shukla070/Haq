@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import mimetypes
 import re
 import secrets
 import shutil
@@ -23,6 +24,7 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from . import agent, config, evidence, rules
@@ -89,6 +91,12 @@ def _load(case_id: str, device: str | None) -> Case:
     return case
 
 
+def _attachable(item: dict) -> bool:
+    """Can this file go out with the customer's email? The stored file is the original, so a
+    file with a sensitive number in it stays back, and a voice note is not proof for a bank."""
+    return item["kind"] != "voice" and not item["masked"]
+
+
 def _progress(case: Case) -> dict | None:
     path = case.folder / "run.json"
     if not path.is_file():
@@ -116,7 +124,10 @@ def _view(case: Case) -> dict:
         "running": case.id in _running,
         "progress": _progress(case),
         "checklist": data["checklist"],
-        "evidence": [{k: e[k] for k in ("id", "kind", "original_name", "note", "masked", "instruction_like")} for e in data["evidence"]],
+        "evidence": [
+            {**{k: e[k] for k in ("id", "kind", "original_name", "note", "masked", "instruction_like")}, "attachable": _attachable(e)}
+            for e in data["evidence"]
+        ],
         "escalation": data["escalation"],
         "question": next((q for q in reversed(data["questions"]) if not q.get("answer")), None),
         "referral": data["referral"],
@@ -228,6 +239,20 @@ def add_evidence(
         except CaseError as problem:
             raise HTTPException(status_code=422, detail=str(problem)) from problem
     return {k: item[k] for k in ("id", "kind", "original_name", "masked", "instruction_like")}
+
+
+@app.get("/cases/{case_id}/evidence/{evidence_id}/file")
+def evidence_file(case_id: str, evidence_id: str, x_haq_device: str | None = Header(None)) -> FileResponse:
+    """The original file, for the customer's email to the bank."""
+    case = _load(case_id, x_haq_device)
+    try:
+        item = case.evidence(evidence_id)
+    except CaseError:
+        raise HTTPException(status_code=404, detail="no such evidence") from None
+    if not _attachable(item):
+        raise HTTPException(status_code=409, detail="this file cannot be attached to the email")
+    media_type = mimetypes.guess_type(item["original_name"])[0] or "application/octet-stream"
+    return FileResponse(case.folder / "evidence" / item["file"], media_type=media_type, filename=item["original_name"])
 
 
 @app.post("/cases/{case_id}/run", status_code=202)

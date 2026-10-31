@@ -2,6 +2,7 @@ package io.github.shukla070.haq
 
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -58,6 +59,17 @@ class HaqApi(private val baseUrl: String, private val device: String) {
                 out.line("--$boundary--")
             }
             return JSONObject(read(conn))
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    /** Downloads one original evidence file, for the customer's email. */
+    fun evidenceFile(id: String, evidenceId: String, target: File) {
+        val conn = open("GET", "/cases/$id/evidence/$evidenceId/file")
+        try {
+            if (conn.responseCode !in 200..299) read(conn)
+            conn.inputStream.use { input -> target.outputStream().use { input.copyTo(it) } }
         } finally {
             conn.disconnect()
         }

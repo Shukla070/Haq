@@ -26,6 +26,7 @@ means losing access to its cases.
 | `GET /cases` | | the home list: `[{id, created, status, running, title, dispute_type, compensation_owed, until}]`, newest first |
 | `GET /cases/{id}` | | the case view; poll it every 2–3 s while `running` |
 | `POST /cases/{id}/evidence` | multipart: `file`, optional `note` | `{id, kind, original_name, masked, instruction_like}`. Screenshots and PDFs are transcribed, voice notes (`.m4a`, `.ogg`, `.wav`, ...) transcribed. Max 32 MB (**413**); unreadable file **422**. Takes a few seconds. |
+| `GET /cases/{id}/evidence/{evidence_id}/file` | | the original file, for the customer's email. **409** for a voice note or a file with a sensitive number (`attachable` is false). |
 | `POST /cases/{id}/run` | | **202** `{case_id, running: true}`; **409** if already running |
 | `POST /cases/{id}/answer` | JSON `{text}` | **202**; answers the open question and resumes the agent |
 | `POST /cases/{id}/sent` | JSON `{on}` (YYYY-MM-DD, empty for today) | the case view; the customer sent the verified draft themselves. A bank complaint puts the case in `waiting` until the bank's reply deadline. **409** if there is no verified draft. |
@@ -43,7 +44,7 @@ The fields the app uses:
 | `status` | which screen to show; see below |
 | `running` | show the progress screen and keep polling |
 | `progress` | `{current, steps[], turn, drafts_refused, seconds}`; `current` is a friendly label like "Calculating what you are owed" |
-| `evidence[]` | `{id, kind, original_name, masked, instruction_like}`; show a shield when `masked`, a warning when `instruction_like` is not empty |
+| `evidence[]` | `{id, kind, original_name, masked, instruction_like, attachable}`; show a shield when `masked`, a warning when `instruction_like` is not empty; `attachable` files go with the email |
 | `coverage` | checklist item → `proven` / `user_stated` / `open` |
 | `facts[]`, `user_statements[]` | what is proven (with its evidence id) vs what the customer said |
 | `entitlement` | `{reversal_due_by, days_late, compensation_owed, compensation_still_growing, ...}` |

@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.File
@@ -50,7 +51,7 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         // A new view model has no attachments, so recordings and shares left in the cache are orphans.
-        listOf("voice", "shared").forEach { File(app.cacheDir, it).deleteRecursively() }
+        listOf("voice", "shared", "outbox").forEach { File(app.cacheDir, it).deleteRecursively() }
         refresh()
     }
 
@@ -159,12 +160,39 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
         null
     }
 
-    fun markSent() = caseAction("Saving") { id -> api.markSent(id) }
+    fun markSent() = caseAction("Saving") { id ->
+        clearOutbox()
+        api.markSent(id)
+    }
+
+    /** Fetch the proof the email can carry into the cache, where the email app can read it. */
+    fun emailProof(onReady: (List<Uri>) -> Unit) = work("Attaching your proof") {
+        val case = current ?: return@work
+        val app = getApplication<Application>()
+        val uris = io {
+            clearOutbox()
+            case.evidence.filter { it.attachable }.map { item ->
+                val folder = File(app.cacheDir, "outbox/${item.id}").apply { mkdirs() }
+                val name = item.name.substringAfterLast('/').substringAfterLast('\\').trimStart('.').ifBlank { item.id }
+                val file = File(folder, name)
+                api.evidenceFile(case.id, item.id, file)
+                FileProvider.getUriForFile(app, "${app.packageName}.files", file)
+            }
+        }
+        onReady(uris)
+    }
+
+    private fun clearOutbox() {
+        File(getApplication<Application>().cacheDir, "outbox").deleteRecursively()
+    }
 
     fun delete() = work("Deleting") {
         val id = (screen as? Screen.Case)?.id ?: return@work
         polling?.cancel()
-        io { api.delete(id) }
+        io {
+            clearOutbox()
+            api.delete(id)
+        }
         goHome()
     }
 
