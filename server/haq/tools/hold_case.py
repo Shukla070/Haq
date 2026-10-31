@@ -9,7 +9,7 @@ from ..verify import unknown_amounts
 DEFINITION = {
     "type": "function",
     "name": "hold_case",
-    "description": "End the run without a complaint when check_escalation says none is due: the bank still has time "
+    "description": "End the run without a complaint when check_escalation says none is due: the bank or company still has time "
     "to reply (the case waits until its reply deadline), or the customer is satisfied (the case is resolved). "
     "Use it only after check_escalation; if a step is due, draft it with submit_draft instead.",
     "parameters": {
@@ -19,7 +19,7 @@ DEFINITION = {
             "message": {
                 "type": "string",
                 "description": "for the customer, plain and short: where the case stands, what they are owed so far, "
-                "and what to do if the bank has not fixed it by the date",
+                "and what to do if it has not been fixed by the date",
             },
         },
         "required": ["message"],
@@ -33,7 +33,7 @@ def run(ctx, args: dict) -> dict:
         return {"error": "call check_escalation first"}
     step = escalation.get("step")
     if step == "wait":
-        hold = {"status": "waiting", "until": escalation["bank_reply_due_by"], "then": "check again with check_escalation"}
+        hold = {"status": "waiting", "until": escalation["reply_due_by"], "then": "check again with check_escalation"}
     elif step is None:
         hold = {"status": "resolved", "until": None, "then": None}
     else:

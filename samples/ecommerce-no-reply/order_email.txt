@@ -1,0 +1,10 @@
+From: orders@stridefootwear.example
+Subject: Your Stride Footwear order SF-209914 is confirmed
+Date: 2 Sep 2026
+
+Thank you for shopping at Stride Footwear, the official store.
+Order: SF-209914
+Item: Stride Velocity Running Shoes, size 9
+Sold and shipped by: Stride Footwear Private Limited
+Total paid: Rs 2,199.00
+Delivery by: 8 Sep 2026

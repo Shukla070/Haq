@@ -153,3 +153,29 @@ Dates are in IST.
   moved to the new date; after them, it asked whether the bank had replied, then wrote an
   Ombudsman complaint for Rs 3,800 (38 days late, file by 11 Feb 2027), verified first time.
   83 offline tests.
+
+## 2026-11-01
+
+- Second dispute type: online order refunds (`ecommerce_refund`), checked against the official
+  texts: the Consumer Protection (E-Commerce) Rules, 2020 (refund duties in rules 6(3) and 7(4);
+  the grievance officer's 48 hours and one month in rules 4(5) and 6(4)(b)), the Consumer
+  Protection Act, 2019, and a 2026 Lok Sabha reply for the National Consumer Helpline's channels.
+- The ladder is the company's grievance officer, then the helpline. Filing in a consumer
+  commission is named as the next step but not drafted, because it is a formal court filing.
+- These rules set no daily compensation and no fixed refund date, so Haq asks only for the
+  refund. The verifier refuses any compensation figure nobody computed, and now also refuses a
+  rule number that is not in a cited rule. One month is a calendar month, not 30 days.
+- An amendment notified on 9 September 2026 starts on 1 January 2027. From law-firm summaries,
+  not the Gazette text, it keeps these rule numbers and the refund duties, and adds a copy of the
+  recorded complaint to rule 4(5). Check the Gazette text before relying on it after that date.
+- The rest of the agent no longer assumes a bank: the pack names who the customer is waiting on
+  and the next step, and the app's wording is neutral.
+- Live runs: a cracked mixer grinder from a marketplace seller gave a verified complaint to the
+  company for Rs 3,499 and noticed the customer reported it inside the return window. Shoes that
+  never came, with no reply in a month, gave a verified helpline grievance for Rs 2,199. A fake
+  shop was referred to 1930. The UPI sample still gives its Rs 1,500 bank complaint.
+- Reading those drafts found two faults the verifier missed, both fixed in the agent's
+  instructions and gone on re-running: a reply date with no source, and the customer's own email
+  and chat lines recorded as proof of what they claim. The verifier still does not check dates.
+- On the emulator: the complaint appeared in the app, and "I've sent it" gave a wait until 1 Dec
+  2026 naming the helpline. 97 offline tests.

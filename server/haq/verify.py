@@ -1,7 +1,7 @@
 """The verifier: checks a draft before the customer ever sees it. It runs in code, after
 the agent, and the agent cannot skip it. A draft passes only if:
 
-- a complaint is due at all (not while the bank still has time to reply),
+- a complaint is due at all (not while the bank or company still has time to reply),
 - the escalation step is the one that is due, and every cited rule is in the rule pack and
   allowed for that step,
 - every cited fact exists, and every checklist item is proven, stated by the customer, or
@@ -25,7 +25,10 @@ _AMOUNT = re.compile(r"(?:₹|\bRs\.?|\bINR)\s*([\d,]+(?:\.\d{1,2})?)", re.IGNOR
 # Statements and app screens often print amounts without a currency sign, so any number in
 # the supporting text counts as a known amount.
 _NUMBER = re.compile(r"(?<![\d/])(\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)(?![\d/])")
-_CIRCULAR = re.compile(r"RBI/\d{4}-\d{2}/\d+|DPSS[\w./ -]*?\d{4}-\d{2}|\b(?:section|clause|paragraph)\s+\d+[\w.()]*", re.IGNORECASE)
+_CIRCULAR = re.compile(
+    r"RBI/\d{4}-\d{2}/\d+|DPSS[\w./ -]*?\d{4}-\d{2}|G\.S\.R\.\s*\d+\(E\)|\b(?:section|clause|paragraph|rule)\s+\d+[\w.()]*",
+    re.IGNORECASE,
+)
 
 
 def _amounts(text: str, pattern: re.Pattern = _AMOUNT) -> set:
@@ -54,7 +57,9 @@ def unknown_amounts(case: Case, text: str) -> list:
         # Voice notes give amounts as words ("saadhe chaar hazaar"), so those count too.
         allowed |= _amounts(source, _NUMBER) | spoken_amounts(source)
     if data["dispute_type"]:
-        allowed.add(str(rules.load(data["dispute_type"])["compensation_per_day"]))
+        per_day = rules.load(data["dispute_type"]).get("compensation_per_day")
+        if per_day:
+            allowed.add(str(per_day))
     entitlement = data.get("entitlement") or {}
     if entitlement:
         allowed.add(str(entitlement.get("compensation_owed")))
@@ -99,16 +104,16 @@ def check(case: Case, draft: dict) -> list:
         own = pack["variants"][data["variant"]]["rule"]
         others = [v["rule"] for k, v in pack["variants"].items() if k != data["variant"]]
         if own not in draft.get("rule_ids", []):
-            problems.append(f"cite {own}, the rule for this payment type")
+            problems.append(f"cite {own}, the rule for this kind of case")
         for wrong in others:
             if wrong in draft.get("rule_ids", []):
-                problems.append(f"{wrong} is for a different payment type than this case")
+                problems.append(f"{wrong} is for a different kind of case than this one")
     for rule in cited_rules:
         if rule and normalize(rule["cite_as"]) not in normalize(body):
             problems.append(f"name the source of {rule['id']} in the body as {rule['cite_as']!r}")
     citation_text = " ".join(normalize(r["citation"]) for r in cited_rules if r)
     for reference in _CIRCULAR.findall(body):
-        if normalize(reference) not in citation_text:
+        if normalize(reference).rstrip(".") not in citation_text:
             problems.append(f"the body mentions {reference!r}, which is not part of any cited rule's citation")
 
     # Facts and checklist coverage

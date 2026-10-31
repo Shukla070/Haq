@@ -1,0 +1,134 @@
+{
+  "id": "ecommerce_refund",
+  "title": "Online order: refund refused, ignored or not paid",
+  "applies_when": "The customer bought something online and the goods or service were defective, damaged, not as described, the wrong item, delivered late or not delivered, and the company refuses to take it back or has not refunded them.",
+  "party": "the company",
+  "variants": {
+    "marketplace": {
+      "label": "Sold by a third-party seller on a platform (the order page or invoice says 'Sold by')",
+      "rule": "ECOM-REFUND-MARKETPLACE"
+    },
+    "inventory": {
+      "label": "Sold directly by the company that runs the website or app",
+      "rule": "ECOM-REFUND-INVENTORY"
+    }
+  },
+  "commission_limit_months": 24,
+  "checklist": [
+    {
+      "id": "order",
+      "question": "What was ordered, from which platform and seller, on what date, what is the order number, and how much was paid?",
+      "settled_by": "Order confirmation, invoice, or a screenshot of the order page"
+    },
+    {
+      "id": "problem",
+      "question": "What went wrong: defective or damaged, wrong item, not as described, delivered late, or not delivered?",
+      "settled_by": "Delivery status, the company's own messages, or the listing compared with what came; otherwise the customer's statement, with their photos attached"
+    },
+    {
+      "id": "refund_status",
+      "question": "Did the customer ask for a return or refund, what did the company answer, and has the money still not come back?",
+      "settled_by": "The company's messages, a return request, or a bank statement; otherwise the customer's statement"
+    },
+    {
+      "id": "complaint_history",
+      "question": "Has the customer already written to the company's grievance officer or customer care with this complaint, when, and what was the reply?",
+      "settled_by": "Ticket number, acknowledgement, or the company's reply"
+    }
+  ],
+  "rules": [
+    {
+      "id": "ECOM-REFUND-MARKETPLACE",
+      "citation": "Consumer Protection (E-Commerce) Rules, 2020, G.S.R. 462(E) dated 23 July 2020, rule 6(3)",
+      "cite_as": "rule 6(3) of the Consumer Protection (E-Commerce) Rules, 2020",
+      "says": "A seller on a marketplace must not refuse to take back goods or refuse to refund the money paid if the goods are defective, deficient or spurious, are not of the characteristics or features advertised or agreed, or are delivered late from the stated delivery schedule. The late-delivery part does not apply if the delay was due to force majeure.",
+      "source": "https://consumeraffairs.gov.in/public/upload/files/E%20commerce%20rules_1732703966.pdf",
+      "verified_on": "2026-11-01"
+    },
+    {
+      "id": "ECOM-REFUND-INVENTORY",
+      "citation": "Consumer Protection (E-Commerce) Rules, 2020, G.S.R. 462(E) dated 23 July 2020, rule 7(4)",
+      "cite_as": "rule 7(4) of the Consumer Protection (E-Commerce) Rules, 2020",
+      "says": "A company selling its own stock online must not refuse to take back goods or refuse to refund the money paid if the goods are defective, deficient or spurious, are not of the characteristics or features advertised or agreed, or are delivered late from the stated delivery schedule. The late-delivery part does not apply if the delay was due to force majeure.",
+      "source": "https://consumeraffairs.gov.in/public/upload/files/E%20commerce%20rules_1732703966.pdf",
+      "verified_on": "2026-11-01"
+    },
+    {
+      "id": "ECOM-GRIEVANCE-PLATFORM",
+      "citation": "Consumer Protection (E-Commerce) Rules, 2020, G.S.R. 462(E) dated 23 July 2020, rule 4(5)",
+      "cite_as": "rule 4(5) of the Consumer Protection (E-Commerce) Rules, 2020",
+      "says": "Every e-commerce company must make sure its grievance officer acknowledges a consumer complaint within 48 hours and redresses it within one month from the date of receipt. Rule 4(4) makes it show the officer's name, contact details and designation on its platform.",
+      "source": "https://consumeraffairs.gov.in/public/upload/files/E%20commerce%20rules_1732703966.pdf",
+      "verified_on": "2026-11-01"
+    },
+    {
+      "id": "ECOM-GRIEVANCE-SELLER",
+      "citation": "Consumer Protection (E-Commerce) Rules, 2020, G.S.R. 462(E) dated 23 July 2020, rule 6(4)(b)",
+      "cite_as": "rule 6(4)(b) of the Consumer Protection (E-Commerce) Rules, 2020",
+      "says": "A seller on a marketplace must appoint a grievance officer, who must acknowledge a consumer complaint within 48 hours and redress it within one month from the date of receipt. Only for marketplace sellers.",
+      "source": "https://consumeraffairs.gov.in/public/upload/files/E%20commerce%20rules_1732703966.pdf",
+      "verified_on": "2026-11-01"
+    },
+    {
+      "id": "ECOM-ACCEPTED-REFUND",
+      "citation": "Consumer Protection (E-Commerce) Rules, 2020, G.S.R. 462(E) dated 23 July 2020, rule 4(10)",
+      "cite_as": "rule 4(10) of the Consumer Protection (E-Commerce) Rules, 2020",
+      "says": "Every e-commerce company must pay accepted refund requests within a reasonable period of time, or as applicable law or the Reserve Bank of India prescribes. Use it when the company already agreed to refund and has not paid. It sets no fixed number of days.",
+      "source": "https://consumeraffairs.gov.in/public/upload/files/E%20commerce%20rules_1732703966.pdf",
+      "verified_on": "2026-11-01"
+    },
+    {
+      "id": "NCH-ROUTE",
+      "citation": "National Consumer Helpline: Department of Consumer Affairs, reply to Lok Sabha Question 5415 on complaints against e-commerce platforms, 2026",
+      "cite_as": "National Consumer Helpline",
+      "says": "The National Consumer Helpline is the single point of access for grievance redressal before going to court. Register a grievance on toll-free 1915, WhatsApp or SMS 8800001915, email nch-ca@gov.in, the NCH app, https://consumerhelpline.gov.in or the Umang app, in 17 languages. Companies in its Convergence programme reply directly.",
+      "source": "https://fcainfoweb.nic.in/PMS/writereaddata/2026_LS_B_5415.pdf",
+      "verified_on": "2026-11-01"
+    },
+    {
+      "id": "CPA-2019-COMMISSION",
+      "citation": "Consumer Protection Act, 2019, section 34(2)(d) and section 69; Jurisdiction Rules 2021, G.S.R. 912(E), rule 3; Commissions Rules 2020 as amended by G.S.R. 606(E) dated 17 August 2023, rule 7",
+      "cite_as": "section 69 of the Consumer Protection Act, 2019",
+      "says": "If the helpline does not settle it, the customer can file in the District Consumer Commission of the district where they live. It hears complaints where the price paid is up to Rs 50 lakh. There is no fee when the price paid is up to Rs 5 lakh. It must be filed within two years from the date the cause of action arose, unless the commission accepts a good reason for the delay.",
+      "source": "https://egazette.gov.in/WriteReadData/2019/210422.pdf",
+      "verified_on": "2026-11-01"
+    }
+  ],
+  "ladder": [
+    {
+      "id": "company",
+      "name": "the company",
+      "to": "The platform's grievance officer, whose name and contact details must be shown on its website or app. Copy the seller's grievance officer if the seller is known.",
+      "purpose": "Ask for the refund, and start the one month the grievance officer has to redress it.",
+      "rules": [
+        "ECOM-REFUND-MARKETPLACE",
+        "ECOM-REFUND-INVENTORY",
+        "ECOM-GRIEVANCE-PLATFORM",
+        "ECOM-GRIEVANCE-SELLER",
+        "ECOM-ACCEPTED-REFUND"
+      ],
+      "wait_months": 1
+    },
+    {
+      "id": "helpline",
+      "name": "the National Consumer Helpline",
+      "to": "National Consumer Helpline: nch-ca@gov.in, https://consumerhelpline.gov.in, or call 1915",
+      "purpose": "Escalate when the company has not redressed the complaint within one month, or refused. Free, and needs no lawyer.",
+      "rules": [
+        "ECOM-REFUND-MARKETPLACE",
+        "ECOM-REFUND-INVENTORY",
+        "ECOM-GRIEVANCE-PLATFORM",
+        "ECOM-GRIEVANCE-SELLER",
+        "ECOM-ACCEPTED-REFUND",
+        "NCH-ROUTE",
+        "CPA-2019-COMMISSION"
+      ]
+    }
+  ],
+  "out_of_scope": [
+    "A fake shop or a scam: report on 1930 and https://cybercrime.gov.in at once.",
+    "A UPI payment that failed but was debited: use upi_failed_debit.",
+    "A purchase in a physical shop: these rules cover online sales only; send them to the National Consumer Helpline, 1915.",
+    "An injury caused by a product: refer to free legal aid (NALSA, 15100)."
+  ]
+}

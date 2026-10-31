@@ -173,9 +173,9 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
         api.markSent(id)
     }
 
-    fun bankFixed() = caseAction("Saving") { id -> api.fixed(id) }
+    fun fixed() = caseAction("Saving") { id -> api.fixed(id) }
 
-    fun bankNotFixed() = caseAction("Looking at your next step") { id ->
+    fun notFixed() = caseAction("Looking at your next step") { id ->
         api.notFixed(id)
         null
     }

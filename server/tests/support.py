@@ -80,7 +80,7 @@ HAPPY_PATH = [
     call("record_user_statement", item="not_reversed", statement="It is still not back in my account."),
     call("record_user_statement", item="complaint_history", statement="I have not complained to the bank yet"),
     call("calculate_entitlement", variant="p2p", transaction_date="2026-10-12", reversed_on=""),
-    call("check_escalation", complained_on="", bank_replied_on="", satisfied=False),
+    call("check_escalation", complained_on="", replied_on="", satisfied=False),
     call(
         "submit_draft",
         step="bank",

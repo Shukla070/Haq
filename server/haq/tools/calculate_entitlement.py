@@ -1,4 +1,4 @@
-"""calculate_entitlement: the reversal deadline and compensation owed, computed in code."""
+"""calculate_entitlement: the deadlines and compensation owed, computed in code."""
 
 from __future__ import annotations
 
@@ -9,14 +9,14 @@ from .. import config, rules
 DEFINITION = {
     "type": "function",
     "name": "calculate_entitlement",
-    "description": "Compute the reversal deadline and the compensation owed under the rule pack. "
+    "description": "Compute the deadlines and any compensation owed under the rule pack. "
     "Never do this date or money arithmetic yourself: use this tool and quote its numbers.",
     "parameters": {
         "type": "object",
         "additionalProperties": False,
         "properties": {
-            "variant": {"type": "string", "description": "p2p or p2m"},
-            "transaction_date": {"type": "string", "description": "YYYY-MM-DD, the day of the transaction"},
+            "variant": {"type": "string", "description": "a variant id from classify_dispute"},
+            "transaction_date": {"type": "string", "description": "YYYY-MM-DD, the day of the payment or order"},
             "reversed_on": {"type": "string", "description": "YYYY-MM-DD if the money came back, else empty"},
         },
         "required": ["variant", "transaction_date", "reversed_on"],

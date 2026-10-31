@@ -3,7 +3,7 @@ import unittest.mock
 
 from fastapi.testclient import TestClient
 
-from haq import agent, api, evidence
+from haq import agent, api, evidence, rules
 from haq.case import Case
 
 from support import HAPPY_PATH, SAMPLE, FakeClient, Workspace
@@ -124,6 +124,9 @@ class OutcomeTest(unittest.TestCase):
         self.assertIsNone(view["hold"]["until"])
 
     def test_not_fixed_restarts_the_agent_with_the_dates(self):
+        case = Case.load(self.case_id)
+        case.set_dispute(rules.load("upi_failed_debit"), "p2p")
+        case.save()
         self._wait(sent=[{"step": "bank", "on": "2026-10-30"}])
         with unittest.mock.patch.object(api, "_schedule") as schedule:
             got = self.client.post(f"/cases/{self.case_id}/not-fixed", headers=ME)
@@ -131,6 +134,17 @@ class OutcomeTest(unittest.TestCase):
         message = schedule.call_args.args[1]
         self.assertIn("2026-10-30", message)
         self.assertIn("check_escalation", message)
+
+    def test_not_fixed_names_the_company_on_an_online_order(self):
+        case = Case.load(self.case_id)
+        case.set_dispute(rules.load("ecommerce_refund"), "marketplace")
+        case.save()
+        self._wait(sent=[{"step": "company", "on": "2026-10-01"}])
+        with unittest.mock.patch.object(api, "_schedule") as schedule:
+            self.client.post(f"/cases/{self.case_id}/not-fixed", headers=ME)
+        message = schedule.call_args.args[1]
+        self.assertIn("the company on 2026-10-01", message)
+        self.assertNotIn("bank", message)
 
     def test_only_a_case_waiting_on_the_bank(self):
         self.assertEqual(409, self.client.post(f"/cases/{self.case_id}/fixed", headers=ME).status_code)
@@ -156,6 +170,17 @@ class SentTest(unittest.TestCase):
 
     def tearDown(self):
         self.workspace.close()
+
+    def test_a_complaint_to_a_company_waits_one_month_and_names_the_helpline(self):
+        case = Case.load(self.case_id)
+        case.set_dispute(rules.load("ecommerce_refund"), "marketplace")
+        case.data["drafts"].append({"step": "company", "passed": True})
+        case.save()
+        view = self.client.post(f"/cases/{self.case_id}/sent", json={"on": "2026-10-28"}, headers=ME).json()
+        self.assertEqual("waiting", view["status"])
+        self.assertEqual("2026-11-28", view["hold"]["until"])
+        self.assertIn("The company has until 28 Nov 2026", view["hold"]["message"])
+        self.assertIn("the National Consumer Helpline", view["hold"]["message"])
 
     def test_no_draft_means_nothing_to_send(self):
         self.assertEqual(409, self.client.post(f"/cases/{self.case_id}/sent", json={}, headers=ME).status_code)

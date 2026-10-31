@@ -93,7 +93,7 @@ def _load(case_id: str, device: str | None) -> Case:
 
 def _attachable(item: dict) -> bool:
     """Can this file go out with the customer's email? The stored file is the original, so a
-    file with a sensitive number in it stays back, and a voice note is not proof for a bank."""
+    file with a sensitive number in it stays back, and a voice note is not proof for a company."""
     return item["kind"] != "voice" and not item["masked"]
 
 
@@ -243,7 +243,7 @@ def add_evidence(
 
 @app.get("/cases/{case_id}/evidence/{evidence_id}/file")
 def evidence_file(case_id: str, evidence_id: str, x_haq_device: str | None = Header(None)) -> FileResponse:
-    """The original file, for the customer's email to the bank."""
+    """The original file, for the customer's email."""
     case = _load(case_id, x_haq_device)
     try:
         item = case.evidence(evidence_id)
@@ -273,23 +273,29 @@ def answer(case_id: str, body: Answer, x_haq_device: str | None = Header(None)) 
     return {"case_id": case_id, "running": True}
 
 
-def _waiting_on_bank(case_id: str, device: str | None) -> Case:
+def _party(case: Case) -> str:
+    """Who the customer is waiting on: the pack's own word for it."""
+    return rules.load(case.data["dispute_type"])["party"] if case.data["dispute_type"] else "the company"
+
+
+def _waiting_on_reply(case_id: str, device: str | None) -> Case:
     case = _load(case_id, device)
     if case.id in _running or case.data["status"] not in ("waiting", "sent"):
-        raise HTTPException(status_code=409, detail="this case is not waiting on the bank")
+        raise HTTPException(status_code=409, detail="this case is not waiting on a reply")
     return case
 
 
 @app.post("/cases/{case_id}/fixed")
 def fixed(case_id: str, x_haq_device: str | None = Header(None)) -> dict:
-    """The customer says the bank fixed it, so the case is over."""
-    case = _waiting_on_bank(case_id, x_haq_device)
+    """The customer says it was fixed, so the case is over."""
+    case = _waiting_on_reply(case_id, x_haq_device)
+    party = _party(case)
     case.data["status"] = "resolved"
     case.data["hold"] = {
         "status": "resolved",
         "until": None,
-        "reason": "The customer says the bank fixed this.",
-        "message": "You told Haq the bank fixed this. Keep the bank's reply in case you need it later.",
+        "reason": f"The customer says {party} fixed this.",
+        "message": f"You told Haq {party} fixed this. Keep the reply in case you need it later.",
         "set": now(),
     }
     case.log("fixed")
@@ -299,24 +305,26 @@ def fixed(case_id: str, x_haq_device: str | None = Header(None)) -> dict:
 
 @app.post("/cases/{case_id}/not-fixed", status_code=202)
 def not_fixed(case_id: str, x_haq_device: str | None = Header(None)) -> dict:
-    """The customer says the bank has not fixed it, so the agent looks at the next step."""
-    case = _waiting_on_bank(case_id, x_haq_device)
-    sent = [s["on"] for s in case.data.get("sent", []) if s["step"] == "bank"]
-    complained = f" They sent their complaint to the bank on {sent[-1]}." if sent else ""
+    """The customer says it has not been fixed, so the agent looks at the next step."""
+    case = _waiting_on_reply(case_id, x_haq_device)
+    pack = rules.load(case.data["dispute_type"]) if case.data["dispute_type"] else None
+    party = _party(case)
+    sent = [s["on"] for s in case.data.get("sent", []) if pack and s["step"] == pack["ladder"][0]["id"]]
+    complained = f" They sent their complaint to {party} on {sent[-1]}." if sent else ""
     case.log("not_fixed")
     case.save()
     _schedule(
         case_id,
-        f"Today's date is {config.today().isoformat()}. The customer says the bank has not fixed this.{complained} "
+        f"Today's date is {config.today().isoformat()}. The customer says {party} has not fixed this.{complained} "
         "Call calculate_entitlement and check_escalation again with today's date. If you need to know whether "
-        "or when the bank replied, ask the customer.",
+        f"or when {party} replied, ask the customer.",
     )
     return {"case_id": case_id, "running": True}
 
 
 @app.post("/cases/{case_id}/sent")
 def mark_sent(case_id: str, body: Sent, x_haq_device: str | None = Header(None)) -> dict:
-    """The customer sent the verified draft themselves. A bank complaint starts the bank's
+    """The customer sent the verified draft themselves. A first complaint starts the company's
     reply period, so the case waits until it ends; the app reminds them on that date."""
     case = _load(case_id, x_haq_device)
     if case.id in _running:
@@ -332,23 +340,24 @@ def mark_sent(case_id: str, body: Sent, x_haq_device: str | None = Header(None))
     if sent_on > config.today():
         raise HTTPException(status_code=422, detail="the date cannot be in the future")
     pack = rules.load(case.data["dispute_type"])
+    party, next_step = pack["party"], pack["ladder"][1]["name"]
     data = case.data
     data.setdefault("sent", []).append({"step": step, "on": sent_on.isoformat(), "recorded": now()})
     data["timeline"].append({"date": sent_on.isoformat(), "event": f"Customer sent the {step} complaint", "evidence_id": None})
     if step == pack["ladder"][0]["id"]:
         position = rules.ladder_position(pack, config.today(), complained_on=sent_on)
         data["escalation"] = {**position, "as_of": config.today().isoformat()}
-        until = position.get("bank_reply_due_by")
+        until = position.get("reply_due_by")
         data["status"] = "waiting" if until else "sent"
         data["hold"] = {
             "status": data["status"],
             "until": until,
             "then": "check again with check_escalation",
-            "reason": f"Complaint sent to the bank on {sent_on.isoformat()}.",
-            "message": f"You sent your complaint on {sent_on:%d %b %Y}. The bank has until {date.fromisoformat(until):%d %b %Y} "
-            "to reply. If it has not fixed this by then, Haq will help you take it to the RBI Ombudsman."
+            "reason": f"Complaint sent to {party} on {sent_on.isoformat()}.",
+            "message": f"You sent your complaint on {sent_on:%d %b %Y}. {party.capitalize()} has until {date.fromisoformat(until):%d %b %Y} "
+            f"to reply. If it has not fixed this by then, Haq will help you take it to {next_step}."
             if until
-            else "You sent your complaint. The bank's time to reply has already passed, so you can take it further now.",
+            else f"You sent your complaint. The time for {party} to reply has already passed, so you can take it further now.",
             "set": now(),
         }
     else:

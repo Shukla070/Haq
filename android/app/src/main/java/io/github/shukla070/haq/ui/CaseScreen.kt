@@ -76,7 +76,7 @@ fun CaseScreen(model: HaqViewModel, id: String) {
                 "waiting", "resolved", "sent" -> case.hold?.let { Waiting(model, case.status, it.until, it.message) }
                 "needs_input" -> Question(model, case.question ?: "")
                 "referred" -> case.referral?.let { Referred(it.reason, it.where) }
-                "filed" -> Text("You sent your complaint to the RBI Ombudsman. Keep its acknowledgement and reference number.")
+                "filed" -> Text("You took your complaint to the next step. Keep its acknowledgement and reference number.")
                 "paused", "new" -> Paused(model)
             }
         }
@@ -109,7 +109,7 @@ private fun Working(case: CaseView) {
     val steps = case.progress?.steps.orEmpty()
     steps.dropLast(1).forEach { Text("✓  $it", style = MaterialTheme.typography.bodyMedium) }
     Text(
-        "This usually takes one to two minutes. Haq checks every fact against your proof and every rule against RBI's own text.",
+        "This usually takes one to two minutes. Haq checks every fact against your proof and every rule against the official text.",
         style = MaterialTheme.typography.bodySmall,
     )
 }
@@ -175,10 +175,10 @@ private fun Waiting(model: HaqViewModel, status: String, until: String?, message
     Text(message, style = MaterialTheme.typography.bodyLarge)
     if (status == "waiting" && until != null && LocalDate.parse(until) >= LocalDate.now()) ReminderNote(until)
     if (status != "resolved") {
-        Text("Has the bank fixed this?", style = MaterialTheme.typography.titleMedium)
+        Text("Has this been fixed?", style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = model::bankFixed, enabled = model.busy == null) { Text("Yes, it's fixed") }
-            OutlinedButton(onClick = model::bankNotFixed, enabled = model.busy == null) { Text("No, not fixed") }
+            Button(onClick = model::fixed, enabled = model.busy == null) { Text("Yes, it's fixed") }
+            OutlinedButton(onClick = model::notFixed, enabled = model.busy == null) { Text("No, not fixed") }
         }
     }
 }
@@ -220,10 +220,9 @@ private fun Referred(reason: String, where: String) {
     val context = LocalContext.current
     Text(reason, style = MaterialTheme.typography.bodyLarge)
     Text(where, style = MaterialTheme.typography.bodyLarge)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = { dial(context, "1930") }) { Text("Call 1930 (cyber fraud)") }
-        OutlinedButton(onClick = { dial(context, "14448") }) { Text("Call 14448 (RBI)") }
-    }
+    OutlinedButton(onClick = { dial(context, "1930") }) { Text("Call 1930 (cyber fraud)") }
+    OutlinedButton(onClick = { dial(context, "1915") }) { Text("Call 1915 (consumer helpline)") }
+    OutlinedButton(onClick = { dial(context, "14448") }) { Text("Call 14448 (RBI)") }
 }
 
 @Composable

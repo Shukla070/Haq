@@ -19,7 +19,8 @@ DEFINITION = {
             "variant": {
                 "type": "string",
                 "description": "for upi_failed_debit: p2p (transfer to a person) or p2m (payment to a merchant); "
-                "use unknown if the evidence does not show it yet",
+                "for ecommerce_refund: marketplace (a third-party seller on a platform) or inventory (the company "
+                "sold its own stock); use unknown if the evidence does not show it yet",
             },
             "reason": {"type": "string", "description": "one sentence: why this pack fits"},
         },

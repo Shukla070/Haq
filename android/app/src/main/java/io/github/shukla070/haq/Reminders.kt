@@ -21,8 +21,8 @@ import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
 /**
- * A notification on the day the bank's time to reply ends. WorkManager keeps it across
- * reboots. The text names no bank or amount, because it can show on a locked phone.
+ * A notification on the day the company's time to reply ends. WorkManager keeps it across
+ * reboots. The text names no company or amount, because it can show on a locked phone.
  */
 object Reminders {
     const val CASE_ID = "case_id"
@@ -72,7 +72,7 @@ object Reminders {
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Has the bank fixed your complaint?")
+            .setContentTitle("Has your complaint been fixed?")
             .setContentText("Its reply date has come. Tap to tell Haq what to do next.")
             .setContentIntent(PendingIntent.getActivity(context, id.hashCode(), open, flags))
             .setAutoCancel(true)

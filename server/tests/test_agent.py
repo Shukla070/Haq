@@ -1,5 +1,6 @@
 import json
 import unittest
+from datetime import date
 
 from haq import agent, evidence, rules, verify
 from haq.case import Case, CaseError
@@ -108,7 +109,7 @@ class AgentLoopTest(unittest.TestCase):
 
 
 WAIT_PATH = HAPPY_PATH[:10] + [
-    call("check_escalation", complained_on="2026-10-20", bank_replied_on="", satisfied=False),
+    call("check_escalation", complained_on="2026-10-20", replied_on="", satisfied=False),
     HAPPY_PATH[-1],
     call("hold_case", message="Your bank has until 19 Nov 2026 to reply. Rs 1,500 is owed so far."),
 ]
@@ -238,9 +239,57 @@ class VerifierTest(unittest.TestCase):
         self.draft["body"] = GOOD_BODY + "\n\nYours sincerely,\nMeera Iyer"
         self.assertEqual([], verify.check(self.case, self.draft))
 
+    def test_a_rule_or_section_from_memory_is_refused(self):
+        self.draft["body"] = GOOD_BODY + " Rule 9(2) and section 72 also apply."
+        problems = verify.check(self.case, self.draft)
+        self.assertTrue(any("'Rule 9(2)'" in p for p in problems))
+        self.assertTrue(any("'section 72'" in p for p in problems))
+
     def test_a_card_number_in_the_body_is_refused(self):
         self.draft["body"] = GOOD_BODY + " My card is 4111 1111 1111 1111."
         self.assertTrue(any("sensitive number" in p for p in verify.check(self.case, self.draft)))
+
+
+ECOM_BODY = (
+    "Dear Grievance Officer,\n\nOn 28 September 2026 I ordered a mixer grinder on Bazaarly, order BZ-4471920, and paid "
+    "Rs 3,499. It arrived with a cracked jar and your seller refused my return. Under rule 6(3) of the Consumer Protection "
+    "(E-Commerce) Rules, 2020 a seller must not refuse to take back defective goods or refuse a refund. Please refund "
+    "Rs 3,499 and tell me within one month, as your grievance officer must.\n\nYours faithfully"
+)
+
+
+class EcommerceDraftTest(unittest.TestCase):
+    def setUp(self):
+        self.workspace = Workspace(today="2026-11-01")
+        self.case = Case.create("I ordered a mixer grinder for Rs 3,499 and the jar was cracked. The seller refused my return.")
+        self.case.set_dispute(rules.load("ecommerce_refund"), "marketplace")
+        self.case.data["escalation"] = rules.ladder_position(rules.load("ecommerce_refund"), date(2026, 11, 1))
+        self.case.data["entitlement"] = rules.entitlement(rules.load("ecommerce_refund"), "marketplace", date(2026, 9, 28), date(2026, 11, 1))
+        for item in self.case.checklist_ids():
+            self.case.record_user_statement(item, "The customer says so.")
+        self.draft = {"step": "company", "rule_ids": ["ECOM-REFUND-MARKETPLACE"], "fact_ids": [], "gaps": [], "subject": "Refund", "body": ECOM_BODY}
+
+    def tearDown(self):
+        self.workspace.close()
+
+    def test_a_good_complaint_passes(self):
+        self.assertEqual([], verify.check(self.case, self.draft))
+
+    def test_the_rule_for_the_other_kind_of_seller_is_refused(self):
+        self.draft["rule_ids"] = ["ECOM-REFUND-INVENTORY"]
+        self.assertTrue(any("cite ECOM-REFUND-MARKETPLACE" in p for p in verify.check(self.case, self.draft)))
+
+    def test_a_compensation_figure_nobody_computed_is_refused(self):
+        self.draft["body"] = ECOM_BODY + " I also claim Rs 5,000 as compensation."
+        self.assertTrue(any("Rs 5000" in p for p in verify.check(self.case, self.draft)))
+
+    def test_skipping_ahead_to_the_helpline_is_refused(self):
+        self.draft["step"] = "helpline"
+        self.assertTrue(any("step due now" in p for p in verify.check(self.case, self.draft)))
+
+    def test_nothing_is_due_while_the_company_has_time(self):
+        self.case.data["escalation"] = rules.ladder_position(rules.load("ecommerce_refund"), date(2026, 11, 1), complained_on=date(2026, 10, 15))
+        self.assertIn("call hold_case", verify.check(self.case, self.draft)[0])
 
 
 if __name__ == "__main__":

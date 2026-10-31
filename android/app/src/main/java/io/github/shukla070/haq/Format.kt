@@ -18,11 +18,11 @@ fun statusLabel(status: String): String = when (status) {
     "new" -> "Not started"
     "working" -> "Working on it"
     "draft_ready" -> "Complaint ready"
-    "waiting" -> "Waiting for the bank"
+    "waiting" -> "Waiting for a reply"
     "needs_input" -> "Needs your answer"
     "referred" -> "Go elsewhere"
     "resolved" -> "Resolved"
-    "filed" -> "Sent to the Ombudsman"
+    "filed" -> "Escalated"
     "sent" -> "Complaint sent"
     "paused" -> "Interrupted"
     else -> status

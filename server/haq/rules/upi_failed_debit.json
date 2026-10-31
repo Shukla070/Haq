@@ -2,6 +2,7 @@
   "id": "upi_failed_debit",
   "title": "Failed UPI payment: money debited but not credited or reversed",
   "applies_when": "The customer's bank account was debited for a UPI payment, the payment did not complete (the person or merchant did not receive it), and the money has not come back.",
+  "party": "the bank",
   "variants": {
     "p2p": {
       "label": "Transfer to a person (beneficiary account not credited)",
@@ -92,6 +93,7 @@
   "ladder": [
     {
       "id": "bank",
+      "name": "the bank",
       "to": "The customer's own bank (the bank whose account was debited), through its grievance channel or the UPI app's 'raise a complaint' option",
       "purpose": "Ask for the reversal and the compensation the RBI circular requires.",
       "rules": [
@@ -103,6 +105,7 @@
     },
     {
       "id": "ombudsman",
+      "name": "the RBI Ombudsman",
       "to": "RBI Integrated Ombudsman, via https://cms.rbi.org.in",
       "purpose": "Escalate when the bank has not replied within 30 days, or replied unsatisfactorily.",
       "rules": [
@@ -118,6 +121,6 @@
   "out_of_scope": [
     "Money sent to a fraudster or scammer: report on 1930 and https://cybercrime.gov.in at once; this is not a failed transaction.",
     "Money sent to the wrong person by mistake (the payment succeeded).",
-    "Disputes about goods or services bought with a successful payment: use the merchant or consumer-commission route."
+    "Disputes about goods or services bought with a successful payment: use ecommerce_refund if it was bought online."
   ]
 }

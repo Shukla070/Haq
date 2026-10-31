@@ -29,8 +29,8 @@ means losing access to its cases.
 | `GET /cases/{id}/evidence/{evidence_id}/file` | | the original file, for the customer's email. **409** for a voice note or a file with a sensitive number (`attachable` is false). |
 | `POST /cases/{id}/run` | | **202** `{case_id, running: true}`; **409** if already running |
 | `POST /cases/{id}/answer` | JSON `{text}` | **202**; answers the open question and resumes the agent |
-| `POST /cases/{id}/sent` | JSON `{on}` (YYYY-MM-DD, empty for today) | the case view; the customer sent the verified draft themselves. A bank complaint puts the case in `waiting` until the bank's reply deadline. **409** if there is no verified draft. |
-| `POST /cases/{id}/fixed` | | the case view, now `resolved`; the customer says the bank fixed it. **409** unless `waiting` or `sent`. |
+| `POST /cases/{id}/sent` | JSON `{on}` (YYYY-MM-DD, empty for today) | the case view; the customer sent the verified draft themselves. A first complaint puts the case in `waiting` until the bank's or company's reply deadline. **409** if there is no verified draft. |
+| `POST /cases/{id}/fixed` | | the case view, now `resolved`; the customer says it was fixed. **409** unless `waiting` or `sent`. |
 | `POST /cases/{id}/not-fixed` | | **202**; the agent checks the next step with today's date. **409** unless `waiting` or `sent`. |
 | `DELETE /cases/{id}` | | `{deleted}`; the case and its evidence are removed from the server. **409** while running. |
 
@@ -49,7 +49,7 @@ The fields the app uses:
 | `evidence[]` | `{id, kind, original_name, masked, instruction_like, attachable}`; show a shield when `masked`, a warning when `instruction_like` is not empty; `attachable` files go with the email |
 | `coverage` | checklist item → `proven` / `user_stated` / `open` |
 | `facts[]`, `user_statements[]` | what is proven (with its evidence id) vs what the customer said |
-| `entitlement` | `{reversal_due_by, days_late, compensation_owed, compensation_still_growing, ...}` |
+| `entitlement` | UPI: `{reversal_due_by, days_late, compensation_owed, compensation_still_growing, ...}`. Online orders: `compensation_owed` is 0, with `consumer_commission_file_by` |
 | `draft` | the latest verified draft: `{step, recipient, subject, body, rule_ids, fact_ids, gaps, next_steps}` |
 | `question` | the open question `{question, why}` when `needs_input` |
 | `hold` | `{status, until, reason, message}` when `waiting` or `resolved` |
@@ -67,6 +67,6 @@ The fields the app uses:
 | `needs_input` | `question`, answered by text or voice |
 | `referred` | `referral`, with tap-to-call for 1930 and 14448 |
 | `resolved` | done |
-| `filed` | an Ombudsman complaint was sent |
-| `sent` | sent, and the bank's reply period has already passed; Fixed / Not fixed |
+| `filed` | the second step was sent (RBI Ombudsman or National Consumer Helpline) |
+| `sent` | sent, and the reply period has already passed; Fixed / Not fixed |
 | `paused` | something went wrong (API error, turn limit); offer Retry (`POST /run`) |

@@ -55,7 +55,7 @@ fun NewCaseScreen(model: HaqViewModel) {
         )
         Text("Your proof", style = MaterialTheme.typography.titleMedium)
         Text(
-            "Screenshots of the payment, bank SMS, statements (PDF) or a voice note. Card numbers, " +
+            "Screenshots of the payment or order, bank SMS, invoices, statements (PDF) or a voice note. Card numbers, " +
                 "Aadhaar and OTPs are hidden before anything reads them.",
             style = MaterialTheme.typography.bodyMedium,
         )
@@ -78,7 +78,7 @@ fun NewCaseScreen(model: HaqViewModel) {
             value = model.customerName,
             onValueChange = { model.customerName = it },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Your name, as your bank knows it") },
+            label = { Text("Your name, as on your account or order") },
             supportingText = { Text("Haq signs your complaint with it.") },
             singleLine = true,
         )

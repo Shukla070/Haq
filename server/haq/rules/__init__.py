@@ -5,6 +5,7 @@ was checked), and the escalation ladder. The model never invents any of these.""
 from __future__ import annotations
 
 import json
+from calendar import monthrange
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -31,6 +32,19 @@ def rule(pack: dict, rule_id: str) -> dict | None:
     return next((r for r in pack["rules"] if r["id"] == rule_id), None)
 
 
+def _add_months(day: date, months: int) -> date:
+    """The same day of the month, or the month's last day if it is shorter (31 Oct → 30 Nov)."""
+    index = day.year * 12 + day.month - 1 + months
+    year, month = index // 12, index % 12 + 1
+    return date(year, month, min(day.day, monthrange(year, month)[1]))
+
+
+def _reply_due(step: dict, sent_on: date) -> date:
+    if "wait_months" in step:
+        return _add_months(sent_on, step["wait_months"])
+    return sent_on + timedelta(days=step["wait_days"])
+
+
 def entitlement(
     pack: dict,
     variant: str,
@@ -43,6 +57,20 @@ def entitlement(
     if variant not in pack["variants"]:
         raise KeyError(f"variant must be one of {', '.join(pack['variants'])}")
     rules = pack["variants"][variant]
+    if "compensation_per_day" not in pack:
+        file_by = _add_months(transaction_date, pack["commission_limit_months"])
+        return {
+            "variant": variant,
+            "rule": rules["rule"],
+            "transaction_date": transaction_date.isoformat(),
+            "refunded_on": reversed_on.isoformat() if reversed_on else None,
+            "as_of": today.isoformat(),
+            "compensation_owed": 0,
+            "consumer_commission_file_by": file_by.isoformat(),
+            "consumer_commission_window_closed": today > file_by,
+            "note": "No rule sets a daily compensation or a fixed refund date here: ask for the refund and name no "
+            "compensation figure. The two-year limit is counted from the order date, the earliest it could start.",
+        }
     due = transaction_date + timedelta(days=rules["reversal_days"])
     until = reversed_on or today
     days_late = max(0, (until - due).days)
@@ -64,34 +92,34 @@ def ladder_position(
     pack: dict,
     today: date,
     complained_on: date | None = None,
-    bank_replied_on: date | None = None,
+    replied_on: date | None = None,
     satisfied: bool = False,
 ) -> dict:
     """Which escalation step is due, and the dates that govern it."""
-    bank, ombudsman = pack["ladder"][0], pack["ladder"][1]
+    first, second = pack["ladder"][0], pack["ladder"][1]
+    party = pack["party"].capitalize()
     if complained_on is None:
         return {
-            "step": bank["id"],
-            "reason": "The bank has not been complained to yet.",
-            "bank_reply_due_if_sent_today": (today + timedelta(days=bank["wait_days"])).isoformat(),
+            "step": first["id"],
+            "reason": f"{party} has not been complained to yet.",
+            "reply_due_if_sent_today": _reply_due(first, today).isoformat(),
         }
     if satisfied:
-        return {"step": None, "reason": "The customer is satisfied with the bank's reply."}
-    reply_due = complained_on + timedelta(days=bank["wait_days"])
-    if bank_replied_on is None and today < reply_due:
+        return {"step": None, "reason": f"The customer is satisfied with the reply from {pack['party']}."}
+    reply_due = _reply_due(first, complained_on)
+    if replied_on is None and today < reply_due:
         return {
             "step": "wait",
-            "reason": "The bank still has time to reply.",
-            "bank_reply_due_by": reply_due.isoformat(),
+            "reason": f"{party} still has time to reply.",
+            "reply_due_by": reply_due.isoformat(),
         }
-    # 90 days from the end of the bank's reply period or its last communication, whichever is later.
-    start = max(reply_due, bank_replied_on) if bank_replied_on else reply_due
-    file_by = start + timedelta(days=ombudsman["filing_window_days"])
-    return {
-        "step": ombudsman["id"],
-        "reason": "The bank replied unsatisfactorily."
-        if bank_replied_on
-        else "The bank did not reply within 30 days.",
-        "file_ombudsman_by": file_by.isoformat(),
-        "window_closed": today > file_by,
+    position = {
+        "step": second["id"],
+        "reason": f"{party} replied unsatisfactorily." if replied_on else f"{party} did not reply in time.",
     }
+    if "filing_window_days" in second:
+        # Counted from the end of the reply period or the last communication, whichever is later.
+        start = max(reply_due, replied_on) if replied_on else reply_due
+        file_by = start + timedelta(days=second["filing_window_days"])
+        position.update(file_by=file_by.isoformat(), window_closed=today > file_by)
+    return position
