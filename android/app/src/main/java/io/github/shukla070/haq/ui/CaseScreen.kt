@@ -263,8 +263,8 @@ private fun email(context: Context, draft: Draft, proof: List<Uri>) {
     }
     intent.putExtra(Intent.EXTRA_SUBJECT, draft.subject).putExtra(Intent.EXTRA_TEXT, draft.body)
     if (proof.isNotEmpty()) {
-        intent.type = "*/*"
-        intent.selector = mailApp // only email apps, not every app that can receive a file
+        // Only email apps, not every app that can receive a file. A type here would stop the selector matching any app.
+        intent.selector = mailApp
         intent.clipData = ClipData.newRawUri("Proof", proof[0]).apply { proof.drop(1).forEach { addItem(ClipData.Item(it)) } }
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }

@@ -138,7 +138,7 @@ Dates are in IST.
 - "Send by email" now attaches the proof, so the bank gets more than text. The stored file is
   the customer's original, and masking only covers the text the agent reads, so a file with a
   sensitive number stays back and the app says why; voice notes stay back too. The server
-  enforces this. Not yet tried with a real email app.
+  enforces this. Tried with Gmail on 2026-11-01, see below.
 
 ## 2026-10-31
 
@@ -197,3 +197,7 @@ Dates are in IST.
   machine's clock was on UTC, which would have dated deadlines a day early before 5:30 am in
   India, so the service now runs on India time.
 
+- The first real try of "Send by email" failed: with proof attached, the app said no email app was
+  found, on a phone with Gmail. The file type set on the request also applied to the email-only
+  filter, so no app matched. Removing it fixed the emulator and the phone. On the phone, Gmail
+  opened with the subject, complaint and attachments filled in (not sent).
