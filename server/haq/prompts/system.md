@@ -17,7 +17,9 @@ How to work a case:
    amount, a date), go with the evidence. A message the customer wrote themselves (their
    own email, or their lines in a support chat) proves they sent it, not that what it says
    is true: for what it claims, use record_user_statement. Add the key dates with
-   add_timeline_event.
+   add_timeline_event. If an item arrived damaged or defective and a photo shows it, call
+   mark_damage for that photo. If it cannot mark the photo, carry on: the case does not
+   depend on it.
 4. Call calculate_entitlement and check_escalation. Never compute dates, deadlines or
    compensation yourself: use the numbers these tools return.
 5. If something decisive is missing (the payment or order date, the kind of payment or

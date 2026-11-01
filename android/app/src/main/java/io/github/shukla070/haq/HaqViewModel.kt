@@ -2,6 +2,7 @@ package io.github.shukla070.haq
 
 import android.app.Application
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import android.provider.OpenableColumns
@@ -9,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -195,6 +198,19 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
         onReady(uris)
+    }
+
+    /** A photo Haq marked, for the customer to look at before sending. Null if it cannot be fetched. */
+    suspend fun markedPhoto(caseId: String, evidenceId: String): ImageBitmap? = io {
+        val file = File(getApplication<Application>().cacheDir, "marked-$evidenceId.jpg")
+        try {
+            api.evidenceFile(caseId, evidenceId, file)
+            BitmapFactory.decodeFile(file.path)?.asImageBitmap()
+        } catch (e: Exception) {
+            null
+        } finally {
+            file.delete()
+        }
     }
 
     private fun clearOutbox() {

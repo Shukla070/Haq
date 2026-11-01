@@ -10,7 +10,7 @@ IST, with a day of slack.
 | Oct 30 | **Evidence intake.** Screenshots and PDFs transcribed and quote-checked, voice notes via Muse Voice Transcribe, sensitive numbers masked | Real screenshots and a Hinglish voice note produce correct facts |
 | Oct 31 | **Verifier.** Checklist coverage from the rule pack, citation checks, evidence-injection screening, run-level report | A planted injection and a made-up citation are both caught in a demo case |
 | Nov 1 | **Android app.** Start a case, add evidence, follow progress, approve drafts, deadline reminders | The full UPI flow works on a phone against the dev server |
-| Nov 2 | **Second and third disputes.** E-commerce refund rule pack with SAM 3.1 unboxing-video evidence; flight rule pack if time allows | An unboxing video shows the tracked parcel and product in the case file |
+| Nov 2 | **Second and third disputes.** E-commerce refund rule pack with SAM 3.1 damage marking on photos (video dropped for time); flight rule pack if time allows | A damage photo is marked and goes with the complaint |
 | Nov 3 | **Hardening.** Speed (target: first draft in under 2 minutes), errors, privacy policy, README, logged-out repo check | Three end-to-end test cases pass twice in a row |
 | Nov 4 | **Ship.** 3-minute demo video, CV platform submission | Submitted, with the public repo link checked logged out |
 

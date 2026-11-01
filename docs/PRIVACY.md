@@ -45,6 +45,13 @@ containing one is refused. This has limits you should know:
   of the email Haq prepares, and the app tells you.
 - Detection is automatic and can miss things. Never share a PIN, password or OTP.
 
+## Damage photos
+
+If your complaint is about a damaged item, Haq may send your photo to Meta's models to find the
+damage, and save a marked copy with your case. The copy is added to the email Haq prepares, next to
+your original. The mark is made by AI and can be wrong, so check it and remove the copy from your
+email if it is.
+
 ## How long it is kept
 
 Your case stays on the server until you delete it in the app, which removes the case and its

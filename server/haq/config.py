@@ -25,6 +25,10 @@ def model() -> str:
     return os.environ.get("MODEL_API_MODEL") or "muse-spark-1.3-contributor"
 
 
+def sam_model() -> str:
+    return os.environ.get("SAM_MODEL") or "sam-3.1"
+
+
 def base_url() -> str:
     return os.environ.get("MODEL_API_BASE_URL") or "https://api.meta.ai/v1"
 

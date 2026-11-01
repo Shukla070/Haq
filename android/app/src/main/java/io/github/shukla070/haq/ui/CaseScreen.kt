@@ -11,6 +11,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,11 +36,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -80,7 +83,7 @@ fun CaseScreen(model: HaqViewModel, id: String) {
                 "paused", "new" -> Paused(model)
             }
         }
-        Evidence(case)
+        Evidence(model, case)
         if (!case.running) {
             TextButton(onClick = { confirmDelete = true }) {
                 Text("Delete this case", color = MaterialTheme.colorScheme.error)
@@ -232,7 +235,7 @@ private fun Paused(model: HaqViewModel) {
 }
 
 @Composable
-private fun Evidence(case: CaseView) {
+private fun Evidence(model: HaqViewModel, case: CaseView) {
     if (case.evidence.isEmpty()) return
     Text("Your proof", style = MaterialTheme.typography.titleMedium)
     case.evidence.forEach { item ->
@@ -242,6 +245,20 @@ private fun Evidence(case: CaseView) {
         )
         Text(
             "${item.name}" + if (notes.isEmpty()) "" else "  ·  " + notes.joinToString(", "),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        if (item.kind == "marked_image") MarkedPhoto(model, case.id, item.id)
+    }
+}
+
+/** Haq's mark can be wrong and it goes out with the complaint, so the customer sees it first. */
+@Composable
+private fun MarkedPhoto(model: HaqViewModel, caseId: String, evidenceId: String) {
+    val photo by produceState<ImageBitmap?>(null, caseId, evidenceId) { value = model.markedPhoto(caseId, evidenceId) }
+    photo?.let {
+        Image(it, "Your photo with the damage marked", Modifier.fillMaxWidth())
+        Text(
+            "Haq's AI marked this copy. If the mark is wrong, delete this attachment from your email before you send it.",
             style = MaterialTheme.typography.bodySmall,
         )
     }

@@ -42,17 +42,15 @@ keep a large cut.
 
 The user approves every message before it is sent. Haq never sends anything by itself.
 
-**Launch scope:** e-commerce refunds, flight cancellations and delays, and failed UPI or
-wrong bank debits.
+**Today:** failed UPI debits and online-order refunds. Flight cancellations and delays are next.
 
 ## Meta models
 
 | Model | Role in Haq |
 |---|---|
 | **Muse Spark** (`muse-spark-1.3`) | The agent: planning, tool calls, reading screenshots and PDFs, drafting complaints |
-| **SAM 3.1** | Evidence from photos and unboxing videos: finds and tracks the parcel and product to show damage or a wrong item |
+| **SAM 3.1** | Damage photos: Muse Spark says where the damage is, SAM separately finds the product, and the damage is marked on a copy only if the two agree |
 | **Muse Voice Transcribe** | Hindi and Hinglish voice-note intake |
-| **Muse Image** | Evidence exhibit sheet: labelled crops and a timeline for the complaint |
 | **Muse Code** | Coding agent used to build Haq |
 
 ## Guardrails

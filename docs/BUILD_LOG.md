@@ -201,3 +201,10 @@ Dates are in IST.
   found, on a phone with Gmail. The file type set on the request also applied to the email-only
   filter, so no app matched. Removing it fixed the emulator and the phone. On the phone, Gmail
   opened with the subject, complaint and attachments filled in (not sent).
+- SAM 3.1 now marks damage in photos, in `mark_damage`. A live test changed the design: SAM returned
+  nothing for "crack", "damage" or "jar", and marked the wrong things for "broken plastic", but found
+  "blender" at 96%. So Muse Spark locates the damage, SAM separately finds the product, and a copy is
+  marked only if they agree. In the app on the live server, an online-order case with a generated
+  photo of a cracked jar reached a verified complaint with the marked copy attached, in about 70
+  seconds. A generated photo of an undamaged product and a UPI screenshot were both refused. Not yet
+  tried on a real photo from a phone. Unboxing video is not built.

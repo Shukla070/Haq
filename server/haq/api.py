@@ -59,6 +59,7 @@ PROGRESS = {
     "record_fact": "Checking facts against your evidence",
     "record_user_statement": "Noting what you told us",
     "add_timeline_event": "Putting the dates in order",
+    "mark_damage": "Marking the damage in your photo",
     "calculate_entitlement": "Calculating what you are owed",
     "check_escalation": "Checking where to complain",
     "ask_user": "Preparing a question for you",

@@ -70,7 +70,13 @@ notes with Muse Voice Transcribe), so the agent reads text. Its tools:
 | `submit_draft` | Hand the complaint to the verifier |
 | `hold_case` | End without a draft when none is due: the bank still has time, or the customer is satisfied |
 
-Planned: SAM 3.1 to locate damage in unboxing photos and videos for the e-commerce pack.
+`mark_damage` marks the damage in a photo of a damaged item, on a copy that goes with the
+complaint beside the original. SAM 3.1 finds objects, not faults: in a live test it found "blender"
+at 96% confidence and nothing for "crack" or "damage". So Muse Spark says where the damage is, SAM
+separately finds the product, and the copy is made only if the damage sits on that product. SAM
+then tightens the box. A mark gives the agent nothing to quote, so damage stays the customer's
+statement. The agent passes only an evidence id, and only plain words from Muse Spark reach SAM.
+Photos with a sensitive number or text addressed to an AI are refused. Unboxing video is not built.
 
 ## How a run ends
 
