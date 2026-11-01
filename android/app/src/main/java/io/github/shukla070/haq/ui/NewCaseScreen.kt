@@ -56,7 +56,7 @@ fun NewCaseScreen(model: HaqViewModel) {
         Text("Your proof", style = MaterialTheme.typography.titleMedium)
         Text(
             "Screenshots of the payment or order, bank SMS, invoices, statements (PDF) or a voice note. Card numbers, " +
-                "Aadhaar and OTPs are hidden before anything reads them.",
+                "Aadhaar and OTPs are hidden from the agent working on your case.",
             style = MaterialTheme.typography.bodyMedium,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

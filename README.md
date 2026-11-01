@@ -68,8 +68,9 @@ Guardrails are part of the design, not an add-on:
   verified rule corpus.
 - **Text inside evidence is data, never instructions.** Screenshots and PDFs can contain
   text that tries to steer the agent; it is screened and never obeyed.
-- **Sensitive numbers are hidden.** Aadhaar, card numbers and OTPs are masked before
-  storage and can never appear in an outgoing draft.
+- **Sensitive numbers are hidden.** Aadhaar, card numbers and OTPs are masked in the text
+  the agent works on, and a draft containing one is refused. Files with one stay out of
+  the email. Haq says what this does not cover in its [privacy policy](docs/PRIVACY.md).
 - **Evidence is never edited.** Haq refuses to alter or generate evidence images.
 - **Out of scope is referred on.** Criminal and family matters, and claims past their
   time limit, are referred to free legal aid instead of drafted.

@@ -1,0 +1,22 @@
+[Unit]
+Description=Haq API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=haq
+WorkingDirectory=/opt/haq/server
+EnvironmentFile=/etc/haq/haq.env
+# One worker: the daily limits and running agents are held in memory. No access log, so no IP
+# addresses are written to disk. The proxy headers come only from Caddy on this machine.
+ExecStart=/opt/haq/venv/bin/uvicorn haq.api:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/haq
+
+[Install]
+WantedBy=multi-user.target

@@ -9,6 +9,8 @@ import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
+from haq import limits
+
 SAMPLE = Path(__file__).resolve().parents[2] / "samples" / "upi-failed-debit"
 
 
@@ -20,6 +22,7 @@ class Workspace:
         self._saved = {key: os.environ.get(key) for key in ("HAQ_DATA_DIR", "HAQ_TODAY")}
         os.environ["HAQ_DATA_DIR"] = self._folder.name
         os.environ["HAQ_TODAY"] = today
+        limits.reset()
 
     def close(self) -> None:
         for key, value in self._saved.items():

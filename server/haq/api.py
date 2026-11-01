@@ -20,20 +20,30 @@ import secrets
 import shutil
 import tempfile
 import threading
+from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from . import agent, config, evidence, rules
+from . import agent, config, evidence, limits, rules
 from .case import Case, CaseError, cases_dir, now
 from .llm import make_client
 
 config.load_env()
-app = FastAPI(title="Haq API", version="0.2.0")
 log = logging.getLogger("haq.api")
+
+
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    config.check_public()
+    _pause_interrupted()
+    yield
+
+
+app = FastAPI(title="Haq API", version="0.2.0", lifespan=_lifespan)
 _running: set = set()
 _lock = threading.Lock()
 
@@ -59,12 +69,12 @@ PROGRESS = {
 
 
 class NewCase(BaseModel):
-    story: str
-    name: str = ""  # the customer's name, to sign the complaint
+    story: str = Field(max_length=6000)
+    name: str = Field(default="", max_length=200)  # the customer's name, to sign the complaint
 
 
 class Answer(BaseModel):
-    text: str
+    text: str = Field(max_length=3000)
 
 
 class Sent(BaseModel):
@@ -89,6 +99,32 @@ def _load(case_id: str, device: str | None) -> Case:
     if not secrets.compare_digest(case.data.get("owner") or "", owner):
         raise missing
     return case
+
+
+def _spend(kind: str, device: str | None, request: Request) -> None:
+    try:
+        limits.spend(kind, device or "", request.client.host if request.client else "")
+    except limits.LimitReached:
+        raise HTTPException(status_code=429, detail="Haq has reached its limit for today. Your case is saved; please try again tomorrow.") from None
+
+
+def _spend_run(case_id: str, device: str | None, request: Request) -> None:
+    with _lock:
+        if case_id in _running:
+            raise HTTPException(status_code=409, detail="the agent is already working on this case")
+        if len(_running) >= limits.MAX_RUNNING:
+            raise HTTPException(status_code=503, detail="Haq is busy with other cases. Please try again in a few minutes.")
+    _spend("run", device, request)
+
+
+def _pause_interrupted() -> None:
+    """A run in progress when the server stopped will never finish: let the app offer a retry."""
+    for path in cases_dir().glob("case-*/case.json"):
+        case = Case(json.loads(path.read_text(encoding="utf-8")))
+        if case.data["status"] == "working":
+            case.data["status"] = "paused"
+            case.log("run_failed", error="server restarted")
+            case.save()
 
 
 def _attachable(item: dict) -> bool:
@@ -185,10 +221,11 @@ def health() -> dict:
 
 
 @app.post("/cases")
-def create_case(body: NewCase, x_haq_device: str | None = Header(None)) -> dict:
+def create_case(body: NewCase, request: Request, x_haq_device: str | None = Header(None)) -> dict:
     owner = _owner(x_haq_device)
     if not body.story.strip():
         raise HTTPException(status_code=422, detail="tell us what happened")
+    _spend("case", x_haq_device, request)
     try:
         case = Case.create(body.story, owner=owner, name=body.name)
     except CaseError as problem:
@@ -224,12 +261,18 @@ def delete_case(case_id: str, x_haq_device: str | None = Header(None)) -> dict:
 
 @app.post("/cases/{case_id}/evidence")
 def add_evidence(
-    case_id: str, file: UploadFile = File(...), note: str = Form(""), x_haq_device: str | None = Header(None)
+    case_id: str, request: Request, file: UploadFile = File(...), note: str = Form(""), x_haq_device: str | None = Header(None)
 ) -> dict:
     case = _load(case_id, x_haq_device)
+    if len(case.data["evidence"]) >= limits.MAX_EVIDENCE:
+        raise HTTPException(status_code=422, detail=f"a case can hold {limits.MAX_EVIDENCE} files")
+    if shutil.disk_usage(cases_dir()).free < limits.MIN_FREE_DISK:
+        log.error("disk nearly full: refusing uploads")
+        raise HTTPException(status_code=503, detail="Haq cannot take new files right now. Please try again later.")
     content = file.file.read(MAX_UPLOAD + 1)
     if len(content) > MAX_UPLOAD:
         raise HTTPException(status_code=413, detail="the file is over 32 MB")
+    _spend("upload", x_haq_device, request)
     name = Path(file.filename or "upload")
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder) / f"{name.stem[:60]}{name.suffix}"
@@ -256,15 +299,17 @@ def evidence_file(case_id: str, evidence_id: str, x_haq_device: str | None = Hea
 
 
 @app.post("/cases/{case_id}/run", status_code=202)
-def run_case(case_id: str, x_haq_device: str | None = Header(None)) -> dict:
+def run_case(case_id: str, request: Request, x_haq_device: str | None = Header(None)) -> dict:
     _load(case_id, x_haq_device)
+    _spend_run(case_id, x_haq_device, request)
     _schedule(case_id)
     return {"case_id": case_id, "running": True}
 
 
 @app.post("/cases/{case_id}/answer", status_code=202)
-def answer(case_id: str, body: Answer, x_haq_device: str | None = Header(None)) -> dict:
+def answer(case_id: str, body: Answer, request: Request, x_haq_device: str | None = Header(None)) -> dict:
     case = _load(case_id, x_haq_device)
+    _spend_run(case_id, x_haq_device, request)
     open_questions = [q for q in case.data["questions"] if not q.get("answer")]
     if open_questions:
         open_questions[-1]["answer"] = body.text
@@ -304,9 +349,10 @@ def fixed(case_id: str, x_haq_device: str | None = Header(None)) -> dict:
 
 
 @app.post("/cases/{case_id}/not-fixed", status_code=202)
-def not_fixed(case_id: str, x_haq_device: str | None = Header(None)) -> dict:
+def not_fixed(case_id: str, request: Request, x_haq_device: str | None = Header(None)) -> dict:
     """The customer says it has not been fixed, so the agent looks at the next step."""
     case = _waiting_on_reply(case_id, x_haq_device)
+    _spend_run(case_id, x_haq_device, request)
     pack = rules.load(case.data["dispute_type"]) if case.data["dispute_type"] else None
     party = _party(case)
     sent = [s["on"] for s in case.data.get("sent", []) if pack and s["step"] == pack["ladder"][0]["id"]]

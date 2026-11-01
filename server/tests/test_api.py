@@ -1,9 +1,12 @@
+import os
+import time
 import unittest
 import unittest.mock
 
 from fastapi.testclient import TestClient
 
-from haq import agent, api, evidence, rules
+from haq import agent, api, config, evidence, limits, rules
+from haq.__main__ import purge
 from haq.case import Case
 
 from support import HAPPY_PATH, SAMPLE, FakeClient, Workspace
@@ -53,6 +56,91 @@ class DeviceTokenTest(unittest.TestCase):
         self.assertEqual(200, made.status_code)
         self.assertEqual("Meera Iyer", Case.load(made.json()["id"]).data["customer_name"])
         self.assertEqual(422, self.client.post("/cases", json={**STORY, "name": "<script>"}, headers=ME).status_code)
+
+
+class LimitsTest(unittest.TestCase):
+    """A public server must not let anyone run up the model bill."""
+
+    def setUp(self):
+        self.workspace = Workspace()
+        self.client = TestClient(api.app)
+
+    def tearDown(self):
+        self.workspace.close()
+
+    def _token(self, n):
+        return {"X-Haq-Device": f"{n:0>43}"}
+
+    def test_one_device_is_stopped_and_counts_reset_the_next_day(self):
+        for _ in range(10):
+            self.assertEqual(200, self.client.post("/cases", json=STORY, headers=ME).status_code)
+        self.assertEqual(429, self.client.post("/cases", json=STORY, headers=ME).status_code)
+        self.assertEqual(200, self.client.post("/cases", json=STORY, headers=SOMEONE_ELSE).status_code)
+        with unittest.mock.patch.dict("os.environ", {"HAQ_TODAY": "2026-10-29"}):
+            self.assertEqual(200, self.client.post("/cases", json=STORY, headers=ME).status_code)
+
+    def test_new_tokens_from_one_address_do_not_get_around_it(self):
+        for n in range(40):
+            self.assertEqual(200, self.client.post("/cases", json=STORY, headers=self._token(n)).status_code)
+        self.assertEqual(429, self.client.post("/cases", json=STORY, headers=self._token(99)).status_code)
+
+    def test_the_whole_server_has_a_daily_run_limit(self):
+        for address in ("a", "b"):
+            limits.spend("run", address, address)
+        with unittest.mock.patch.dict("os.environ", {"HAQ_MAX_RUNS_PER_DAY": "2"}):
+            with self.assertRaises(limits.LimitReached):
+                limits.spend("run", "c", "c")
+
+    def test_a_refused_request_is_not_counted(self):
+        for _ in range(8):
+            limits.spend("run", "d", "x")
+        with self.assertRaises(limits.LimitReached):
+            limits.spend("run", "d", "y")
+        limits.spend("run", "e", "y")  # "y" was not charged for the refusal
+
+    def test_runs_are_limited_and_too_many_at_once_are_refused(self):
+        case_id = self.client.post("/cases", json=STORY, headers=ME).json()["id"]
+        with unittest.mock.patch.object(api, "_schedule"):
+            for _ in range(8):
+                self.assertEqual(202, self.client.post(f"/cases/{case_id}/run", headers=ME).status_code)
+            self.assertEqual(429, self.client.post(f"/cases/{case_id}/run", headers=ME).status_code)
+        limits.reset()
+        with unittest.mock.patch.object(api, "_running", {"1", "2", "3", "4"}):
+            self.assertEqual(503, self.client.post(f"/cases/{case_id}/run", headers=ME).status_code)
+
+    def test_long_text_and_too_many_files_are_refused(self):
+        self.assertEqual(422, self.client.post("/cases", json={"story": "x" * 6001}, headers=ME).status_code)
+        case_id = self.client.post("/cases", json=STORY, headers=ME).json()["id"]
+        case = Case.load(case_id)
+        case.data["evidence"] = [{}] * limits.MAX_EVIDENCE
+        case.save()
+        got = self.client.post(f"/cases/{case_id}/evidence", files={"file": ("a.txt", b"hello")}, headers=ME)
+        self.assertEqual(422, got.status_code)
+
+    def test_a_public_server_refuses_a_contributor_model(self):
+        with unittest.mock.patch.dict("os.environ", {"HAQ_PUBLIC": "1", "MODEL_API_MODEL": "muse-spark-1.3-contributor"}):
+            with self.assertRaises(RuntimeError):
+                config.check_public()
+        with unittest.mock.patch.dict("os.environ", {"HAQ_PUBLIC": "1", "MODEL_API_MODEL": "muse-spark-1.3"}):
+            config.check_public()
+
+    def test_old_cases_are_purged_and_recent_ones_kept(self):
+        old = self.client.post("/cases", json=STORY, headers=ME).json()["id"]
+        recent = self.client.post("/cases", json=STORY, headers=ME).json()["id"]
+        path = Case.load(old).folder / "case.json"
+        long_ago = time.time() - 181 * 86400
+        os.utime(path, (long_ago, long_ago))
+        self.assertEqual(1, purge())
+        self.assertEqual(404, self.client.get(f"/cases/{old}", headers=ME).status_code)
+        self.assertEqual(200, self.client.get(f"/cases/{recent}", headers=ME).status_code)
+
+    def test_a_run_cut_off_by_a_restart_can_be_retried(self):
+        case_id = self.client.post("/cases", json=STORY, headers=ME).json()["id"]
+        case = Case.load(case_id)
+        case.data["status"] = "working"
+        case.save()
+        api._pause_interrupted()
+        self.assertEqual("paused", Case.load(case_id).data["status"])
 
 
 class EvidenceFileTest(unittest.TestCase):

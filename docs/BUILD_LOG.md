@@ -179,3 +179,21 @@ Dates are in IST.
   and chat lines recorded as proof of what they claim. The verifier still does not check dates.
 - On the emulator: the complaint appeared in the app, and "I've sent it" gave a wait until 1 Dec
   2026 naming the helpline. 97 offline tests.
+- Getting ready for a public server, not yet deployed:
+  - Anyone can make a device token, so daily limits apply per device, per IP address and across
+    the server, with caps on agent runs at once, text length, files per case and low disk. Counts
+    stay in memory, so no IP address is stored.
+  - `HAQ_PUBLIC=1` refuses to start with a Contributor model. A live run on standard
+    `muse-spark-1.3` gave a verified complaint: 16 turns, about 111K tokens.
+  - A restart pauses any cut-off run so it can be retried, and cases with no activity for 180 days
+    are deleted.
+  - Writing the privacy policy exposed a false claim: the app said sensitive numbers were hidden
+    "before anything reads them" and the README said "before storage". Files go to the model to be
+    read first, and originals are stored as given. Corrected, and the policy says so plainly.
+- The server is live on AWS Lightsail in Mumbai (Ubuntu 24.04, 1 GB, https through Caddy), on the
+  standard model. Over https, a screenshot, a PDF with a card number and a voice note gave a
+  verified bank complaint in 74 seconds; the PDF stayed out of the email, another device got 404,
+  and delete removed the case from disk. The emulator app ran a case with no USB tunnel. The
+  machine's clock was on UTC, which would have dated deadlines a day early before 5:30 am in
+  India, so the service now runs on India time.
+

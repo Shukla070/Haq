@@ -1,5 +1,7 @@
 package io.github.shukla070.haq.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,8 +29,11 @@ import io.github.shukla070.haq.day
 import io.github.shukla070.haq.rupees
 import io.github.shukla070.haq.statusLabel
 
+private const val PRIVACY_POLICY = "https://github.com/Shukla070/Haq/blob/main/docs/PRIVACY.md"
+
 @Composable
 fun HomeScreen(model: HaqViewModel) {
+    val context = LocalContext.current
     LazyColumn(
         Modifier.fillMaxSize().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -57,6 +63,11 @@ fun HomeScreen(model: HaqViewModel) {
         }
         items(model.cases, key = { it.id }) { case ->
             CaseRow(case) { model.open(case.id) }
+        }
+        item {
+            TextButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY))) }) {
+                Text("Privacy policy")
+            }
         }
     }
 }

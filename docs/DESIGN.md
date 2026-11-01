@@ -103,5 +103,6 @@ called every checklist item proven. The problems map directly onto Haq:
 
 Development uses the Contributor model variants covered by hackathon credits; content
 sent to them may be used for product improvement. Only test data is used with them.
-Real users' data goes only to standard (non-Contributor) models, and the privacy policy
-will say what is sent and why.
+Real users' data goes only to standard (non-Contributor) models: a server with `HAQ_PUBLIC=1`
+refuses to start with a Contributor model. The [privacy policy](PRIVACY.md) says what is sent
+and why.

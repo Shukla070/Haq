@@ -33,6 +33,13 @@ def data_dir() -> Path:
     return Path(os.environ.get("HAQ_DATA_DIR") or SERVER_DIR / "workspace")
 
 
+def check_public() -> None:
+    """Real people's data must never reach a Contributor model, whose input may be used for
+    product improvement. HAQ_PUBLIC=1 marks a server real people use."""
+    if os.environ.get("HAQ_PUBLIC") == "1" and "contributor" in model():
+        raise RuntimeError(f"HAQ_PUBLIC=1 needs a standard model, not {model()}: set MODEL_API_MODEL")
+
+
 def today() -> date:
     """The date the agent treats as today. HAQ_TODAY (YYYY-MM-DD) pins it for tests and demos."""
     pinned = os.environ.get("HAQ_TODAY")

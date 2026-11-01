@@ -5,17 +5,20 @@
     python -m haq run CASE_ID [--turns N]               run (or re-run) the agent on a case
     python -m haq answer CASE_ID "answer..."            answer the agent's question and continue
     python -m haq show CASE_ID                          the case summary and latest draft
+    python -m haq purge                                 delete cases with no activity for 180 days
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
+import time
 from pathlib import Path
 
 from . import agent, config, evidence
-from .case import Case
+from .case import Case, cases_dir
 from .llm import make_client
 
 
@@ -36,6 +39,15 @@ def show(case: Case) -> None:
         print(f"\nVERIFIED DRAFT ({draft['step']}) to {draft['recipient']}\nSubject: {draft['subject']}\n")
         print(draft["body"])
         print("\nNext steps: " + (draft.get("next_steps") or ""))
+
+
+def purge(days: int = 180) -> int:
+    """Delete cases nobody has touched for this long, as the privacy policy promises."""
+    cutoff = time.time() - days * 86400
+    old = [path.parent for path in cases_dir().glob("case-*/case.json") if path.stat().st_mtime < cutoff]
+    for folder in old:
+        shutil.rmtree(folder)
+    return len(old)
 
 
 def main(argv: list | None = None) -> int:
@@ -59,10 +71,14 @@ def main(argv: list | None = None) -> int:
     answer.add_argument("text")
     answer.add_argument("--turns", type=int, default=15)
     commands.add_parser("show").add_argument("case_id")
+    commands.add_parser("purge", help="delete cases with no activity for 180 days")
     args = parser.parse_args(argv)
 
     if args.command == "show":
         show(Case.load(args.case_id))
+        return 0
+    if args.command == "purge":
+        print(f"deleted {purge()} case(s)", file=sys.stderr)
         return 0
     client = make_client()
     if args.command == "new":

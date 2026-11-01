@@ -1,0 +1,9 @@
+[Unit]
+Description=Delete Haq cases with no activity for 180 days
+
+[Service]
+Type=oneshot
+User=haq
+WorkingDirectory=/opt/haq/server
+EnvironmentFile=/etc/haq/haq.env
+ExecStart=/opt/haq/venv/bin/python -m haq purge
