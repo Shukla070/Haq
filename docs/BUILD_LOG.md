@@ -239,3 +239,9 @@ Dates are in IST.
   plain text, and a status or ₹2,000 sat alone with no label. Each value now has a label, the amount
   says why it is owed, buttons look like buttons, and a case shows what the customer said instead of
   "I explained what happened in my voice note."
+- A pass over the remaining gaps. A sent complaint can now be reread, and the app says the customer adds
+  the email address themselves, because Haq has no verified list of addresses. "No cases yet" showed when
+  the server could not be reached, which is untrue, so it now says the cases could not load. A referred
+  case showed the agent's own note ("outside both rule packs"), so it now shows only where to go. On the
+  emulator, the complaint read well in dark mode, "not fixed" asked about a reply and went back to
+  waiting, a scam story went to 1930, and the reminder job survived a full restart and fired when forced.

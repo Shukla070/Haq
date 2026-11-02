@@ -44,6 +44,10 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var cases by mutableStateOf<List<CaseCard>>(emptyList())
         private set
+
+    /** False until the server has answered once: an empty list before that doesn't mean no cases. */
+    var casesLoaded by mutableStateOf(false)
+        private set
     var current by mutableStateOf<CaseView?>(null)
         private set
     var busy by mutableStateOf<String?>(null) // what the app is doing, for a spinner
@@ -83,6 +87,7 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
 
     fun refresh() = work(null) {
         cases = io { api.listCases() }
+        casesLoaded = true
         Reminders.sync(getApplication(), cases)
     }
 

@@ -63,7 +63,11 @@ fun HomeScreen(model: HaqViewModel) {
                 }
                 if (model.cases.isEmpty()) {
                     Text(
-                        "No cases yet. When you start one, it appears here with its status and what you're owed.",
+                        when {
+                            model.casesLoaded -> "No cases yet. When you start one, it appears here with its status and what you're owed."
+                            model.error != null -> "Your cases couldn't load. They're still saved, so tap Refresh to try again."
+                            else -> "Loading your cases…"
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }

@@ -54,6 +54,7 @@ data class CaseView(
     val evidence: List<Evidence>,
     val entitlement: Entitlement?,
     val draft: Draft?,
+    val wasSent: Boolean,
     val question: String?,
     val hold: Hold?,
     val referral: Referral?,
@@ -90,6 +91,7 @@ data class CaseView(
                     nextSteps = d.str("next_steps") ?: "",
                 )
             },
+            wasSent = (json.optJSONArray("sent")?.length() ?: 0) > 0,
             question = json.optJSONObject("question")?.str("question"),
             hold = json.optJSONObject("hold")?.let { h -> Hold(h.str("until"), h.str("message") ?: "") },
             referral = json.optJSONObject("referral")?.let { r -> Referral(r.str("reason") ?: "", r.str("where") ?: "") },

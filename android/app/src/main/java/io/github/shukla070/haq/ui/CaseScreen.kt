@@ -78,9 +78,10 @@ fun CaseScreen(model: HaqViewModel, id: String) {
                 "draft_ready" -> case.draft?.let { DraftReady(model, it, case.evidence) }
                 "waiting", "resolved", "sent" -> case.hold?.let { Waiting(model, case.status, it.until, it.message) }
                 "needs_input" -> Question(model, case.question ?: "")
-                "referred" -> case.referral?.let { Referred(it.reason, it.where) }
+                "referred" -> case.referral?.let { Referred(it.where) }
                 "paused", "new" -> Paused(model)
             }
+            if (case.status != "draft_ready" && case.wasSent) case.draft?.let { SentComplaint(it) }
         }
         Evidence(model, case)
         if (!case.running) {
@@ -164,14 +165,7 @@ private fun DraftReady(model: HaqViewModel, draft: Draft, evidence: List<Evidenc
     val heldBack = evidence.filter { it.masked && it.kind != "voice" }.map { it.name }
     SectionTitle("Your complaint")
     PaperSheet {
-        FieldLabel("Send it to")
-        Text(draft.recipient, Modifier.padding(bottom = 8.dp), style = MaterialTheme.typography.bodyMedium)
-        FieldLabel("Subject")
-        Text(draft.subject, Modifier.padding(bottom = 8.dp), style = MaterialTheme.typography.titleSmall)
-        FieldLabel("Message")
-        SelectionContainer {
-            Text(draft.body, style = MaterialTheme.typography.bodyMedium)
-        }
+        ComplaintText(draft)
         Stamp("Checked against your proof", Modifier.align(Alignment.End).padding(top = 12.dp))
     }
     Text(
@@ -187,6 +181,11 @@ private fun DraftReady(model: HaqViewModel, draft: Draft, evidence: List<Evidenc
         )
         SecondButton("Copy", { copy(context, draft.subject + "\n\n" + draft.body) })
     }
+    Text(
+        "Your email app opens with this filled in, but you add the address yourself. Look for the grievance officer " +
+            "or customer care email on the company's website or app.",
+        style = MaterialTheme.typography.bodySmall,
+    )
     if (attached.isNotEmpty()) {
         Text("The email attaches: ${attached.joinToString(", ")}.", style = MaterialTheme.typography.bodySmall)
     }
@@ -201,6 +200,30 @@ private fun DraftReady(model: HaqViewModel, draft: Draft, evidence: List<Evidenc
     if (draft.nextSteps.isNotBlank()) {
         SectionTitle("What to do next")
         Text(draft.nextSteps, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun ComplaintText(draft: Draft) {
+    FieldLabel("Send it to")
+    Text(draft.recipient, Modifier.padding(bottom = 8.dp), style = MaterialTheme.typography.bodyMedium)
+    FieldLabel("Subject")
+    Text(draft.subject, Modifier.padding(bottom = 8.dp), style = MaterialTheme.typography.titleSmall)
+    FieldLabel("Message")
+    SelectionContainer {
+        Text(draft.body, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+/** The complaint stays readable after sending: the customer may need it when they follow up. */
+@Composable
+private fun SentComplaint(draft: Draft) {
+    val context = LocalContext.current
+    var open by rememberSaveable { mutableStateOf(false) }
+    SecondButton(if (open) "Hide your complaint" else "See the complaint you sent", { open = !open }, Modifier.fillMaxWidth())
+    if (open) {
+        PaperSheet { ComplaintText(draft) }
+        SecondButton("Copy", { copy(context, draft.subject + "\n\n" + draft.body) })
     }
 }
 
@@ -256,10 +279,11 @@ private fun Question(model: HaqViewModel, question: String) {
 }
 
 @Composable
-private fun Referred(reason: String, where: String) {
+private fun Referred(where: String) {
     val context = LocalContext.current
-    Text(reason, style = MaterialTheme.typography.bodyLarge)
-    Text(where, style = MaterialTheme.typography.bodyLarge)
+    // Only where to go: the agent's reason is a note in its own words, not written for the customer.
+    SectionTitle("What to do now")
+    Text(where, style = MaterialTheme.typography.bodyMedium)
     SecondButton("Call 1930 (cyber fraud)", { dial(context, "1930") })
     SecondButton("Call 1915 (consumer helpline)", { dial(context, "1915") })
     SecondButton("Call 14448 (RBI)", { dial(context, "14448") })
