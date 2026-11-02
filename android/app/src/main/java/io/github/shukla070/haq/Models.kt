@@ -9,6 +9,7 @@ data class CaseCard(
     val status: String,
     val running: Boolean,
     val title: String,
+    val disputeType: String?,
     val compensationOwed: Int?,
     val until: String?,
 ) {
@@ -18,6 +19,7 @@ data class CaseCard(
             status = json.getString("status"),
             running = json.optBoolean("running"),
             title = json.str("title") ?: "",
+            disputeType = json.str("dispute_type"),
             compensationOwed = json.int("compensation_owed"),
             until = json.str("until"),
         )
@@ -46,6 +48,8 @@ data class CaseView(
     val id: String,
     val status: String,
     val running: Boolean,
+    val title: String,
+    val disputeType: String?,
     val progress: Progress?,
     val evidence: List<Evidence>,
     val entitlement: Entitlement?,
@@ -59,6 +63,8 @@ data class CaseView(
             id = json.getString("id"),
             status = json.getString("status"),
             running = json.optBoolean("running"),
+            title = json.str("title") ?: "",
+            disputeType = json.str("dispute_type"),
             progress = json.optJSONObject("progress")?.let { p ->
                 Progress(p.str("current") ?: "", p.optJSONArray("steps").strings())
             },

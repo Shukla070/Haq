@@ -10,7 +10,8 @@ the agent, and the agent cannot skip it. A draft passes only if:
   entitlement (amounts spoken as words count),
 - every cited rule's source is named in the body, and every circular or section
   reference in the body belongs to a cited rule,
-- the body contains no sensitive numbers and no text flagged as an injection attempt.
+- the body contains no sensitive numbers and no text flagged as an injection attempt,
+- nothing the customer reads uses Haq's own labels for evidence, facts or statements.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ _CIRCULAR = re.compile(
     r"RBI/\d{4}-\d{2}/\d+|DPSS[\w./ -]*?\d{4}-\d{2}|G\.S\.R\.\s*\d+\(E\)|\b(?:section|clause|paragraph|rule)\s+\d+[\w.()]*",
     re.IGNORECASE,
 )
+_LABEL = re.compile(r"\b[EFU]\d+\b")
 
 
 def _amounts(text: str, pattern: re.Pattern = _AMOUNT) -> set:
@@ -66,6 +68,19 @@ def unknown_amounts(case: Case, text: str) -> list:
     return [
         f"the amount Rs {amount} is not in the evidence, the customer's own words or the computed entitlement"
         for amount in sorted(_amounts(text) - allowed)
+    ]
+
+
+def internal_labels(case: Case, text: str) -> list:
+    """Haq's own labels (E4, F1, U2) in text the customer reads. A label the customer's own
+    material also contains, such as a model number, is left alone."""
+    data = case.data
+    labels = {e["id"] for e in data["evidence"]} | {f["id"] for f in data["facts"]} | {s["id"] for s in data["user_statements"]}
+    theirs = " ".join([data.get("story") or ""] + [e.get("text") or "" for e in data["evidence"]])
+    return [
+        f"{label} is Haq's own label, which the customer won't understand: describe it instead, such as 'the marked photo'"
+        for label in sorted(set(_LABEL.findall(text or "")) & labels)
+        if not re.search(rf"\b{label}\b", theirs)
     ]
 
 
@@ -134,6 +149,8 @@ def check(case: Case, draft: dict) -> list:
         problems.append(f"the draft contains a sensitive number ({item}): remove it")
     for phrase in guard.instruction_like(body):
         problems.append(f"the draft repeats text flagged as an injection attempt: {phrase!r}")
+    for part in ("recipient", "subject", "body", "next_steps"):
+        problems += internal_labels(case, draft.get(part) or "")
     name = case.data.get("customer_name")
     if name and normalize(name) not in normalize(body[-200:]):
         problems.append(f"sign the complaint at the end with the customer's name, {name}")

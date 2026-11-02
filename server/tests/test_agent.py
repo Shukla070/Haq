@@ -188,6 +188,15 @@ class VerifierTest(unittest.TestCase):
     def test_the_good_draft_passes(self):
         self.assertEqual([], verify.check(self.case, self.draft))
 
+    def test_haqs_own_labels_are_refused_in_what_the_customer_reads(self):
+        self.draft["next_steps"] = "Attach the marked photo E1 and keep the acknowledgement."
+        self.assertTrue(any("E1 is Haq's own label" in p for p in verify.check(self.case, self.draft)))
+
+    def test_a_label_the_customers_material_contains_is_allowed(self):
+        self.case.data["evidence"][0]["text"] += " Model E1"
+        self.draft["next_steps"] = "Mention model E1 if they ask."
+        self.assertEqual([], verify.check(self.case, self.draft))
+
     def test_a_rule_outside_the_pack_is_refused(self):
         self.draft["rule_ids"].append("CONSUMER-PROTECTION-ACT-S35")
         self.assertTrue(any("not in the rule pack" in p for p in verify.check(self.case, self.draft)))

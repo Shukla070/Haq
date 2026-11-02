@@ -16,6 +16,19 @@ SOMEONE_ELSE = {"X-Haq-Device": "b" * 40}
 STORY = {"story": "My UPI payment failed but the money was cut."}
 
 
+class ToldTest(unittest.TestCase):
+    def test_a_typed_story_is_shown_as_it_is(self):
+        self.assertEqual("My order broke", api._told({"story": "my order broke", "evidence": []}))
+
+    def test_a_voice_only_case_shows_what_they_said(self):
+        voice = {"kind": "voice", "text": "on twelve October I sent money"}
+        self.assertEqual("On twelve October I sent money", api._told({"story": api.VOICE_ONLY_STORY, "evidence": [voice]}))
+
+    def test_a_voice_note_not_yet_read_does_not_show_the_placeholder(self):
+        data = {"story": api.VOICE_ONLY_STORY, "evidence": [{"kind": "voice", "text": ""}]}
+        self.assertEqual("You told Haq in a voice note.", api._told(data))
+
+
 class DeviceTokenTest(unittest.TestCase):
     def setUp(self):
         self.workspace = Workspace()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .. import guard
 from ..case import now
-from ..verify import unknown_amounts
+from ..verify import internal_labels, unknown_amounts
 
 DEFINITION = {
     "type": "function",
@@ -40,7 +40,7 @@ def run(ctx, args: dict) -> dict:
         return {"error": f"a complaint is due now at the {step!r} step: draft it with submit_draft"}
     message = str(args.get("message", ""))
     # The customer reads this message as it is, so it gets the draft's checks on amounts and sensitive numbers.
-    problems = unknown_amounts(ctx.case, message)
+    problems = unknown_amounts(ctx.case, message) + internal_labels(ctx.case, message)
     problems += [f"the message contains a sensitive number ({item}): remove it" for item in guard.sensitive_numbers(message)]
     if problems:
         return {"error": "; ".join(problems)}

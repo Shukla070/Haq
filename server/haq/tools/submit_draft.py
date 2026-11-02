@@ -36,7 +36,7 @@ DEFINITION = {
                     "required": ["item", "why"],
                 },
             },
-            "next_steps": {"type": "string", "description": "what the customer should do after sending, with dates"},
+            "next_steps": {"type": "string", "description": "what the customer should do after sending, with dates, in plain words: name proof by what it is, never by a label like E4"},
         },
         "required": ["step", "recipient", "subject", "body", "fact_ids", "rule_ids", "gaps", "next_steps"],
     },

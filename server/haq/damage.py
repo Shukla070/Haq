@@ -159,7 +159,7 @@ def mark(case: Case, client: OpenAI | None, evidence_id: str) -> dict:
     return case.add_evidence(
         {
             "file": stored,
-            "original_name": f"damage-marked-{evidence_id}.jpg",
+            "original_name": f"{source['original_name'].rsplit('.', 1)[0]} - damage marked.jpg",
             "kind": "marked_image",
             "sha256": "",
             "note": "",

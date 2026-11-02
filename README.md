@@ -110,6 +110,7 @@ agent's control) follows the patterns taught in Meta's
 [legal-agent-workshop](https://github.com/meta-models/legal-agent-workshop). Haq's code is
 written separately for this project.
 
-The app uses [Rozha One](https://fonts.google.com/specimen/Rozha+One) and
+The app's icons are from Google's Material Icons, under the Apache License 2.0. It uses
+[Rozha One](https://fonts.google.com/specimen/Rozha+One) and
 [Hind](https://fonts.google.com/specimen/Hind) by the Indian Type Foundry, under the SIL Open Font
 License. The licences ship with the app.

@@ -227,3 +227,15 @@ Dates are in IST.
   cases" was paper-coloured text on paper, and outlined buttons were grey. On the emulator, the
   release build ran an online-order case and a UPI case to verified complaints. The home screen and
   guide were also checked in dark mode. Not yet on a real phone.
+- The first run on a real phone worked, and reading its two complaints found three problems. The next
+  steps said "marked damage photo E4", Haq's own label, so the verifier now refuses those labels in
+  anything the customer reads. A UPI complaint said the payee did not receive the money, which neither
+  the customer nor the proof had said. And it treated "not refunded" as the customer's word alone,
+  though the statement showed no credit up to 27 Oct. The last two are instructions to the agent, not
+  checks in code: the first wording still stated the claim as fact in 1 of 3 runs, the second was right
+  in 5 of 5, and that lowers the risk without removing it. All five samples still give their expected
+  results.
+- Using the app on a real phone showed that its screens did not explain themselves: links looked like
+  plain text, and a status or ₹2,000 sat alone with no label. Each value now has a label, the amount
+  says why it is owed, buttons look like buttons, and a case shows what the customer said instead of
+  "I explained what happened in my voice note."

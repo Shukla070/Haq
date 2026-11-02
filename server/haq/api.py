@@ -153,11 +153,24 @@ def _progress(case: Case) -> dict | None:
     }
 
 
+VOICE_ONLY_STORY = "I explained what happened in my voice note."
+
+
+def _told(data: dict) -> str:
+    """What the customer said, for the app to show. The app sends VOICE_ONLY_STORY as the story
+    when they only recorded, so their words are in the voice note instead."""
+    told = data["story"]
+    if told == VOICE_ONLY_STORY:
+        told = next((e["text"] for e in data["evidence"] if e["kind"] == "voice" and e.get("text")), "You told Haq in a voice note.")
+    return told[:1].upper() + told[1:]
+
+
 def _view(case: Case) -> dict:
     data = case.data
     passed = [d for d in data["drafts"] if d["passed"]]
     return {
         **case.summary(),
+        "title": _told(data),
         "running": case.id in _running,
         "progress": _progress(case),
         "checklist": data["checklist"],
@@ -182,7 +195,7 @@ def _card(case: Case) -> dict:
         "created": data["created"],
         "status": data["status"],
         "running": case.id in _running,
-        "title": data["story"][:80],
+        "title": _told(data)[:120],
         "dispute_type": data["dispute_type"],
         "compensation_owed": entitlement.get("compensation_owed"),
         "until": (data.get("hold") or {}).get("until"),

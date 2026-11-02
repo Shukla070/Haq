@@ -57,6 +57,7 @@ class MarkDamageTest(unittest.TestCase):
         self.assertEqual("E2", result["marked"])
         item = self.case.evidence("E2")
         self.assertEqual("marked_image", item["kind"])
+        self.assertEqual("E1 - damage marked.jpg", item["original_name"])
         self.assertEqual("E1", item["marked_from"])
         self.assertEqual("", item["text"])
         marked = Image.open(io.BytesIO((self.case.folder / "evidence" / item["file"]).read_bytes()))

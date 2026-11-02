@@ -49,6 +49,7 @@ The fields the app uses:
 | `evidence[]` | `{id, kind, original_name, masked, instruction_like, attachable}`; show a shield when `masked`, a warning when `instruction_like` is not empty; `attachable` files go with the email |
 | `coverage` | checklist item → `proven` / `user_stated` / `open` |
 | `facts[]`, `user_statements[]` | what is proven (with its evidence id) vs what the customer said |
+| `title` | what the customer said: their story, or their voice note if they only recorded |
 | `entitlement` | UPI: `{reversal_due_by, days_late, compensation_owed, compensation_still_growing, ...}`. Online orders: `compensation_owed` is 0, with `consumer_commission_file_by` |
 | `draft` | the latest verified draft: `{step, recipient, subject, body, rule_ids, fact_ids, gaps, next_steps}` |
 | `question` | the open question `{question, why}` when `needs_input` |
