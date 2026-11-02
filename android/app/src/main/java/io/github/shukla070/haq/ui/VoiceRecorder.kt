@@ -11,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -139,9 +138,9 @@ fun VoiceRecorder(onFinished: (File) -> Unit, modifier: Modifier = Modifier, ena
                 "Recording… ${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}",
                 style = MaterialTheme.typography.bodyMedium,
             )
-            OutlinedButton(onClick = ::stopRecording) { Text("Stop") }
+            SecondButton("Stop", ::stopRecording)
         } else {
-            OutlinedButton(onClick = ::onRecord, enabled = enabled) { Text("Record a voice note") }
+            SecondButton("Record a voice note", ::onRecord, enabled = enabled)
         }
         Text("Speak in Hindi, English or both.", style = MaterialTheme.typography.bodySmall)
         if (denied) {

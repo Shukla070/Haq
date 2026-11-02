@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,11 +40,11 @@ fun NewCaseScreen(model: HaqViewModel) {
     }
 
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TextButton(onClick = model::goHome) { Text("← Back") }
-        Text("What happened?", style = MaterialTheme.typography.headlineSmall)
+        Text("What happened?", style = MaterialTheme.typography.headlineLarge)
         OutlinedTextField(
             value = story,
             onValueChange = { story = it },
@@ -60,12 +58,10 @@ fun NewCaseScreen(model: HaqViewModel) {
             style = MaterialTheme.typography.bodyMedium,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = {
+            SecondButton("Add screenshots", {
                 pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }) { Text("Add screenshots") }
-            OutlinedButton(onClick = { pickFiles.launch(arrayOf("application/pdf", "text/plain", "audio/*")) }) {
-                Text("Add files")
-            }
+            }, Modifier.weight(1f))
+            SecondButton("Add files", { pickFiles.launch(arrayOf("application/pdf", "text/plain", "audio/*")) }, Modifier.weight(1f))
         }
         VoiceRecorder(onFinished = model::addVoiceNote, enabled = model.busy == null)
         attachments.forEach { file ->
@@ -82,10 +78,11 @@ fun NewCaseScreen(model: HaqViewModel) {
             supportingText = { Text("Haq signs your complaint with it.") },
             singleLine = true,
         )
-        Button(
-            onClick = { model.start(story.trim()) },
+        MainButton(
+            "Get my money back",
+            { model.start(story.trim()) },
+            Modifier.fillMaxWidth(),
             enabled = (story.isNotBlank() || model.hasVoiceNote) && model.customerName.isNotBlank() && model.busy == null,
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Get my money back") }
+        )
     }
 }

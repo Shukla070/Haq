@@ -26,6 +26,7 @@ import kotlinx.coroutines.withContext
 sealed interface Screen {
     data object Home : Screen
     data object NewCase : Screen
+    data object Guide : Screen
     data class Case(val id: String) : Screen
 }
 
@@ -55,6 +56,7 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
     init {
         // A new view model has no attachments, so recordings and shares left in the cache are orphans.
         listOf("voice", "shared", "outbox").forEach { File(app.cacheDir, it).deleteRecursively() }
+        if (Device.firstLaunch(app)) screen = Screen.Guide
         refresh()
     }
 
@@ -67,6 +69,10 @@ class HaqViewModel(app: Application) : AndroidViewModel(app) {
 
     fun newCase() {
         screen = Screen.NewCase
+    }
+
+    fun showGuide() {
+        screen = Screen.Guide
     }
 
     fun open(id: String) {

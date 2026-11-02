@@ -31,4 +31,14 @@ object Device {
     }
 
     private const val NAME = "customer_name"
+
+    /** True only the first time: the guide opens once by itself. */
+    fun firstLaunch(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(GUIDE_SEEN, false)) return false
+        prefs.edit().putBoolean(GUIDE_SEEN, true).apply()
+        return true
+    }
+
+    private const val GUIDE_SEEN = "guide_seen"
 }

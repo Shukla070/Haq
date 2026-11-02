@@ -23,12 +23,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -44,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import io.github.shukla070.haq.CaseView
@@ -61,7 +57,7 @@ fun CaseScreen(model: HaqViewModel, id: String) {
     val case = model.current
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TextButton(onClick = model::goHome) { Text("← Your cases") }
@@ -72,7 +68,7 @@ fun CaseScreen(model: HaqViewModel, id: String) {
         if (case.running) {
             Working(case)
         } else {
-            Text(statusLabel(case.status), style = MaterialTheme.typography.headlineSmall)
+            Text(statusLabel(case.status), style = MaterialTheme.typography.headlineLarge)
             if (case.status != "resolved") Owed(case)
             when (case.status) {
                 "draft_ready" -> case.draft?.let { DraftReady(model, it, case.evidence) }
@@ -110,7 +106,7 @@ private fun Working(case: CaseView) {
         Text(case.progress?.current ?: "Starting", style = MaterialTheme.typography.titleMedium)
     }
     val steps = case.progress?.steps.orEmpty()
-    steps.dropLast(1).forEach { Text("✓  $it", style = MaterialTheme.typography.bodyMedium) }
+    steps.dropLast(1).forEach { Text("✓  $it", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium) }
     Text(
         "This usually takes one to two minutes. Haq checks every fact against your proof and every rule against the official text.",
         style = MaterialTheme.typography.bodySmall,
@@ -121,16 +117,14 @@ private fun Working(case: CaseView) {
 private fun Owed(case: CaseView) {
     val owed = case.entitlement?.compensationOwed ?: return
     if (owed <= 0) return
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-        Column(Modifier.fillMaxWidth().padding(16.dp)) {
-            Text("Compensation owed so far", style = MaterialTheme.typography.labelLarge)
-            Text(rupees(owed), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-            val e = case.entitlement
-            val late = e.daysLate?.let { "$it days late" }
-            val growing = if (e.stillGrowing) "growing by ₹100 every day until the money is back" else null
-            listOfNotNull(late, growing).takeIf { it.isNotEmpty() }?.let {
-                Text(it.joinToString(", "), style = MaterialTheme.typography.bodyMedium)
-            }
+    Column {
+        Text("Compensation owed so far", style = MaterialTheme.typography.labelLarge)
+        Text(rupees(owed), style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.error)
+        val e = case.entitlement
+        val late = e.daysLate?.let { "$it days late" }
+        val growing = if (e.stillGrowing) "growing by ₹100 every day until the money is back" else null
+        listOfNotNull(late, growing).takeIf { it.isNotEmpty() }?.let {
+            Text(it.joinToString(", "), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -140,23 +134,26 @@ private fun DraftReady(model: HaqViewModel, draft: Draft, evidence: List<Evidenc
     val context = LocalContext.current
     val attached = evidence.filter { it.attachable }.map { it.name }
     val heldBack = evidence.filter { it.masked && it.kind != "voice" }.map { it.name }
-    Text("To: ${draft.recipient}", style = MaterialTheme.typography.bodyMedium)
-    Text(draft.subject, style = MaterialTheme.typography.titleMedium)
-    Card {
+    PaperSheet {
+        Text("To: ${draft.recipient}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(draft.subject, Modifier.padding(top = 4.dp, bottom = 8.dp), style = MaterialTheme.typography.titleMedium)
         SelectionContainer {
-            Text(draft.body, Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
+            Text(draft.body, style = MaterialTheme.typography.bodyMedium)
         }
+        Stamp("Checked against your proof", Modifier.align(Alignment.End).padding(top = 12.dp))
     }
     Text(
         "Checked before you see it: every fact against your proof, every rule against the official text, every amount against your evidence.",
         style = MaterialTheme.typography.bodySmall,
     )
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = { copy(context, draft.subject + "\n\n" + draft.body) }) { Text("Copy") }
-        OutlinedButton(
-            onClick = { model.emailProof { proof -> email(context, draft, proof) } },
+        MainButton(
+            "Send by email",
+            { model.emailProof { proof -> email(context, draft, proof) } },
+            Modifier.weight(1f),
             enabled = model.busy == null,
-        ) { Text("Send by email") }
+        )
+        SecondButton("Copy", { copy(context, draft.subject + "\n\n" + draft.body) })
     }
     if (attached.isNotEmpty()) {
         Text("The email attaches: ${attached.joinToString(", ")}.", style = MaterialTheme.typography.bodySmall)
@@ -168,7 +165,7 @@ private fun DraftReady(model: HaqViewModel, draft: Draft, evidence: List<Evidenc
             style = MaterialTheme.typography.bodySmall,
         )
     }
-    Button(onClick = model::markSent, modifier = Modifier.fillMaxWidth()) { Text("I've sent it") }
+    SecondButton("I've sent it", model::markSent, Modifier.fillMaxWidth())
     if (draft.nextSteps.isNotBlank()) Text("Next: ${draft.nextSteps}", style = MaterialTheme.typography.bodyMedium)
 }
 
@@ -180,8 +177,8 @@ private fun Waiting(model: HaqViewModel, status: String, until: String?, message
     if (status != "resolved") {
         Text("Has this been fixed?", style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = model::fixed, enabled = model.busy == null) { Text("Yes, it's fixed") }
-            OutlinedButton(onClick = model::notFixed, enabled = model.busy == null) { Text("No, not fixed") }
+            MainButton("Yes, it's fixed", model::fixed, Modifier.weight(1f), enabled = model.busy == null)
+            SecondButton("No, not fixed", model::notFixed, Modifier.weight(1f), enabled = model.busy == null)
         }
     }
 }
@@ -211,9 +208,7 @@ private fun Question(model: HaqViewModel, question: String) {
     var answer by rememberSaveable { mutableStateOf("") }
     Text(question, style = MaterialTheme.typography.bodyLarge)
     OutlinedTextField(value = answer, onValueChange = { answer = it }, modifier = Modifier.fillMaxWidth())
-    Button(onClick = { model.answer(answer.trim()) }, enabled = answer.isNotBlank() && model.busy == null) {
-        Text("Send answer")
-    }
+    MainButton("Send answer", { model.answer(answer.trim()) }, enabled = answer.isNotBlank() && model.busy == null)
     Text("Or answer with a voice note", style = MaterialTheme.typography.bodyMedium)
     VoiceRecorder(onFinished = model::answerWithVoice, enabled = model.busy == null)
 }
@@ -223,22 +218,23 @@ private fun Referred(reason: String, where: String) {
     val context = LocalContext.current
     Text(reason, style = MaterialTheme.typography.bodyLarge)
     Text(where, style = MaterialTheme.typography.bodyLarge)
-    OutlinedButton(onClick = { dial(context, "1930") }) { Text("Call 1930 (cyber fraud)") }
-    OutlinedButton(onClick = { dial(context, "1915") }) { Text("Call 1915 (consumer helpline)") }
-    OutlinedButton(onClick = { dial(context, "14448") }) { Text("Call 14448 (RBI)") }
+    SecondButton("Call 1930 (cyber fraud)", { dial(context, "1930") })
+    SecondButton("Call 1915 (consumer helpline)", { dial(context, "1915") })
+    SecondButton("Call 14448 (RBI)", { dial(context, "14448") })
 }
 
 @Composable
 private fun Paused(model: HaqViewModel) {
     Text("Haq was interrupted before it finished. Your case and evidence are saved.", style = MaterialTheme.typography.bodyLarge)
-    Button(onClick = model::retry, enabled = model.busy == null) { Text("Try again") }
+    MainButton("Try again", model::retry, enabled = model.busy == null)
 }
 
 @Composable
 private fun Evidence(model: HaqViewModel, case: CaseView) {
     if (case.evidence.isEmpty()) return
-    Text("Your proof", style = MaterialTheme.typography.titleMedium)
+    Text("Your proof", Modifier.padding(top = 8.dp), style = MaterialTheme.typography.titleMedium)
     case.evidence.forEach { item ->
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         val notes = listOfNotNull(
             "sensitive numbers hidden".takeIf { item.masked },
             "contains text trying to instruct an AI; ignored".takeIf { item.flagged },

@@ -220,3 +220,10 @@ Dates are in IST.
   Not yet run on a real phone.
 - The online-order rules now name e-Jagriti as where to file with a consumer commission. They said
   to file but not where, which an outside review of the plan pointed out.
+- The app had still been on Android's stock theme. It now looks like a complaint file: ledger green
+  and paper, a marigold action, stamp red for money owed, in Rozha One and Hind, which both cover
+  Hindi. A new icon is drawn from the word हक़. A first-launch guide and `docs/USER_GUIDE.md` explain
+  the app. No case logic changed. Looking at the screens caught two bugs the build did not: "Your
+  cases" was paper-coloured text on paper, and outlined buttons were grey. On the emulator, the
+  release build ran an online-order case and a UPI case to verified complaints. The home screen and
+  guide were also checked in dark mode. Not yet on a real phone.

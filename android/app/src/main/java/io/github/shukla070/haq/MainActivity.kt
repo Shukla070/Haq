@@ -6,6 +6,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,14 +18,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.shukla070.haq.ui.CaseScreen
+import io.github.shukla070.haq.ui.GuideScreen
 import io.github.shukla070.haq.ui.HomeScreen
 import io.github.shukla070.haq.ui.NewCaseScreen
 import io.github.shukla070.haq.ui.theme.HaqTheme
+import io.github.shukla070.haq.ui.theme.Ledger
 
 class MainActivity : ComponentActivity() {
     private lateinit var model: HaqViewModel
@@ -56,24 +63,43 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun HaqApp(model: HaqViewModel = viewModel()) {
     BackHandler(enabled = model.screen != Screen.Home) { model.goHome() }
-    Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            model.busy?.let { label ->
-                LinearProgressIndicator(Modifier.fillMaxWidth())
-                Text(label, Modifier.padding(horizontal = 16.dp, vertical = 4.dp), style = MaterialTheme.typography.bodySmall)
+    // The home screen's green header runs up behind the status bar.
+    val green = model.screen == Screen.Home
+    val dark = isSystemInDarkTheme()
+    val view = LocalView.current
+    SideEffect {
+        val window = (view.context as ComponentActivity).window
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !green && !dark
+    }
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = if (green) Ledger else MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+    ) { padding ->
+        Column(Modifier.padding(top = padding.calculateTopPadding()).fillMaxSize()) {
+            Column(Modifier.background(MaterialTheme.colorScheme.background)) {
+                model.busy?.let { label ->
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                    Text(label, Modifier.padding(horizontal = 16.dp, vertical = 4.dp), style = MaterialTheme.typography.bodySmall)
+                }
+                model.error?.let { message ->
+                    Text(
+                        message,
+                        Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
-            model.error?.let { message ->
-                Text(
-                    message,
-                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            Box(Modifier.fillMaxSize()) {
+            Box(
+                Modifier.fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(bottom = padding.calculateBottomPadding()),
+            ) {
                 when (val screen = model.screen) {
                     Screen.Home -> HomeScreen(model)
                     Screen.NewCase -> NewCaseScreen(model)
+                    Screen.Guide -> GuideScreen(model)
                     is Screen.Case -> CaseScreen(model, screen.id)
                 }
             }

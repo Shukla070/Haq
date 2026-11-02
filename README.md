@@ -1,6 +1,14 @@
-# Haq
+# हक़ Haq
 
 **Get your money back from companies that owe it to you.**
+
+<p align="center">
+  <img src="docs/images/home.png" width="23%" alt="Home screen with two cases, one showing Rs 2,000 owed">
+  <img src="docs/images/owed.png" width="23%" alt="A failed UPI case showing Rs 2,000 compensation owed, above the complaint">
+  <img src="docs/images/complaint.png" width="23%" alt="The end of a complaint, stamped as checked against the proof, with Send by email and Copy buttons">
+  <img src="docs/images/damage.png" width="23%" alt="A customer photo of a cracked blender jar, with the crack marked in a red box">
+</p>
+<p align="center"><em>Sample cases with made-up details. The damage photo is AI-generated.</em></p>
 
 Haq (हक़, "what is rightfully yours") is an AI agent that takes an Indian consumer from
 "they refused my refund" to an escalation the company has to answer. You show it what
@@ -76,12 +84,24 @@ Guardrails are part of the design, not an add-on:
 Haq helps people use consumer grievance channels. It is not a law firm and does not
 give legal advice.
 
+## How to use it
+
+The [user guide](docs/USER_GUIDE.md) explains it step by step, and the app shows a short version the
+first time it opens.
+
+1. Tell Haq what happened, by typing or with a voice note in Hindi, English or both.
+2. Add your proof: screenshots, bank SMS, invoices, statements, or a photo of the damage.
+3. Read the complaint Haq writes, usually within two minutes.
+4. Send it yourself from your email app. Haq reminds you when the company's time to reply is up, then
+   helps with the next step.
+
 ## Status
 
-Early build. The agent core works end to end on a failed-UPI-debit case: from evidence to
-a verified bank complaint in about two minutes. See [server/README.md](server/README.md) to
-run it, [docs/BUILD_LOG.md](docs/BUILD_LOG.md) for progress, [docs/PLAN.md](docs/PLAN.md)
-for the plan, and [docs/DESIGN.md](docs/DESIGN.md) for the architecture.
+The Android app works end to end on a hosted server, for failed UPI debits and online-order refunds:
+from evidence to a verified complaint in about two minutes. It is an early build and has not been
+through the Play Store. See [server/README.md](server/README.md) to run the server,
+[docs/BUILD_LOG.md](docs/BUILD_LOG.md) for progress, [docs/PLAN.md](docs/PLAN.md) for the plan, and
+[docs/DESIGN.md](docs/DESIGN.md) for the architecture.
 
 ## Acknowledgements
 
@@ -89,3 +109,7 @@ The agent design (a tool-calling loop, quote-checked facts, and verification out
 agent's control) follows the patterns taught in Meta's
 [legal-agent-workshop](https://github.com/meta-models/legal-agent-workshop). Haq's code is
 written separately for this project.
+
+The app uses [Rozha One](https://fonts.google.com/specimen/Rozha+One) and
+[Hind](https://fonts.google.com/specimen/Hind) by the Indian Type Foundry, under the SIL Open Font
+License. The licences ship with the app.
