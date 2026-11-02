@@ -208,3 +208,15 @@ Dates are in IST.
   photo of a cracked jar reached a verified complaint with the marked copy attached, in about 70
   seconds. A generated photo of an undamaged product and a UPI screenshot were both refused. Not yet
   tried on a real photo from a phone. Unboxing video is not built.
+- The first signed release build crashed on launch, twice, for reasons the debug build could not
+  show, because only release builds are shrunk. The template's `packageScope` left a class extending
+  one it could no longer reach, and shrinking then removed the constructor WorkManager's database is
+  created through. Dropping `packageScope` and adding one keep rule fixed both. A release build now
+  also refuses to build without an https server address and the signing key, which lives outside the
+  repo. On the emulator, against the live server, the release build ran an online-order case to a
+  verified complaint with the marked photo, opened Gmail with all 4 attachments, fired the reminder
+  when its job was forced, and opened the case from the notification. "Not fixed" on the day the
+  complaint was sent asked about a reply, then kept waiting until the deadline instead of escalating.
+  Not yet run on a real phone.
+- The online-order rules now name e-Jagriti as where to file with a consumer commission. They said
+  to file but not where, which an outside review of the plan pointed out.

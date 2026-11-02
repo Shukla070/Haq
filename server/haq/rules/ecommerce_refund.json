@@ -92,6 +92,14 @@
       "says": "If the helpline does not settle it, the customer can file in the District Consumer Commission of the district where they live. It hears complaints where the price paid is up to Rs 50 lakh. There is no fee when the price paid is up to Rs 5 lakh. It must be filed within two years from the date the cause of action arose, unless the commission accepts a good reason for the delay.",
       "source": "https://egazette.gov.in/WriteReadData/2019/210422.pdf",
       "verified_on": "2026-11-01"
+    },
+    {
+      "id": "EJAGRITI-FILING",
+      "citation": "e-Jagriti: Department of Consumer Affairs, press release of 16 November 2025 (PIB)",
+      "cite_as": "e-Jagriti",
+      "says": "A complaint to a consumer commission can be filed online on e-Jagriti, https://e-jagriti.gov.in, the Department of Consumer Affairs' platform, from any location. Registration is by OTP. It allows digital or offline fee payment, virtual hearings, exchanging documents online and tracking the case, so the customer does not have to travel.",
+      "source": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2190535&reg=3&lang=2",
+      "verified_on": "2026-11-02"
     }
   ],
   "ladder": [
@@ -121,7 +129,8 @@
         "ECOM-GRIEVANCE-SELLER",
         "ECOM-ACCEPTED-REFUND",
         "NCH-ROUTE",
-        "CPA-2019-COMMISSION"
+        "CPA-2019-COMMISSION",
+        "EJAGRITI-FILING"
       ]
     }
   ],

@@ -13,6 +13,17 @@ val localProperties = Properties().apply {
 }
 val serverUrl: String = localProperties.getProperty("haq.serverUrl") ?: "http://127.0.0.1:8000"
 
+// The release key and its passwords stay outside the repo: haq.signing in local.properties
+// points to a file with storeFile, storePassword, keyAlias and keyPassword.
+val signing = Properties().apply {
+    localProperties.getProperty("haq.signing")?.let { file(it) }?.takeIf { it.isFile }?.inputStream()?.use { load(it) }
+}
+
+if (gradle.startParameter.taskNames.any { "Release" in it }) {
+    check(serverUrl.startsWith("https://")) { "A release build needs haq.serverUrl=https://... in local.properties" }
+    check(!signing.isEmpty) { "A release build needs haq.signing in local.properties" }
+}
+
 android {
     namespace = "io.github.shukla070.haq"
     compileSdk {
@@ -30,11 +41,23 @@ android {
         buildConfigField("String", "SERVER_URL", "\"$serverUrl\"")
     }
 
+    signingConfigs {
+        if (!signing.isEmpty) {
+            create("release") {
+                storeFile = file(signing.getProperty("storeFile"))
+                storePassword = signing.getProperty("storePassword")
+                keyAlias = signing.getProperty("keyAlias")
+                keyPassword = signing.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
+            proguardFiles("proguard-rules.pro")
             optimization {
                 enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
         }
     }
