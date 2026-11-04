@@ -26,6 +26,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import agent, config, evidence, limits, rules
@@ -426,3 +427,28 @@ def mark_sent(case_id: str, body: Sent, x_haq_device: str | None = Header(None))
     case.log("sent", step=step, on=sent_on.isoformat())
     case.save()
     return _view(case)
+
+
+# The website: the same screens as the app, served from server/web next to the API. It is
+# mounted last, so every API route above wins over a file of the same name.
+WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+WEB_HEADERS = {
+    # Only this site's own files run, and nothing loads from anywhere else.
+    "Content-Security-Policy": "default-src 'self'; img-src 'self' blob:; media-src 'self' blob:; "
+    "object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "microphone=(self), camera=(), geolocation=()",
+    "Cache-Control": "no-cache",  # an update reaches people on their next visit
+}
+
+
+class _Web(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers.update(WEB_HEADERS)
+        return response
+
+
+if WEB_DIR.is_dir():
+    app.mount("/", _Web(directory=WEB_DIR, html=True), name="web")

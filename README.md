@@ -2,11 +2,13 @@
 
 **Get your money back from companies that owe it to you.**
 
+<p align="center"><a href="https://13-207-173-63.sslip.io/"><strong>Try Haq in your browser →</strong></a><br>
+<sub>An early test version. Read every complaint before you send it.</sub></p>
+
 <p align="center">
-  <img src="docs/images/home.png" width="23%" alt="Home screen with two cases, one showing Rs 2,000 owed">
-  <img src="docs/images/owed.png" width="23%" alt="A failed UPI case showing Rs 2,000 compensation owed, above the complaint">
-  <img src="docs/images/complaint.png" width="23%" alt="The end of a complaint, stamped as checked against the proof, with Send by email and Copy buttons">
-  <img src="docs/images/damage.png" width="23%" alt="A customer photo of a cracked blender jar, with the crack marked in a red box">
+  <img src="docs/images/web-home.png" width="31%" alt="Haq's home page, with a failed UPI case showing Rs 2,200 owed and an online order refund">
+  <img src="docs/images/web-owed.png" width="31%" alt="A failed UPI case showing Rs 2,200 compensation owed and why, above the complaint to the bank">
+  <img src="docs/images/web-damage.png" width="31%" alt="A customer photo of a cracked blender jar, with the crack marked in a red box, under the case's proof">
 </p>
 <p align="center"><em>Sample cases with made-up details. The damage photo is AI-generated.</em></p>
 
@@ -86,20 +88,23 @@ give legal advice.
 
 ## How to use it
 
-The [user guide](docs/USER_GUIDE.md) explains it step by step, and the app shows a short version the
-first time it opens.
+Haq runs [in the browser](https://13-207-173-63.sslip.io/) on any phone or computer, and as an Android
+app. The [user guide](docs/USER_GUIDE.md) explains it step by step, and the app shows a short version
+the first time it opens.
 
 1. Tell Haq what happened, by typing or with a voice note in Hindi, English or both.
 2. Add your proof: screenshots, bank SMS, invoices, statements, or a photo of the damage.
 3. Read the complaint Haq writes, usually within two minutes.
 4. Send it yourself from your email app. Haq reminds you when the company's time to reply is up, then
-   helps with the next step.
+   helps with the next step. On the web, you attach your proof yourself and add the date to your
+   calendar instead of getting a reminder.
 
 ## Status
 
-The Android app works end to end on a hosted server, for failed UPI debits and online-order refunds:
-from evidence to a verified complaint in about two minutes. It is an early build and has not been
-through the Play Store. See [server/README.md](server/README.md) to run the server,
+The Android app and the website work end to end on a hosted server, for failed UPI debits and
+online-order refunds: from evidence to a verified complaint in about two minutes. Both are early
+builds, and the app has not been through the Play Store yet. The website is served by the same
+server, from [server/web](server/web). See [server/README.md](server/README.md) to run the server,
 [docs/BUILD_LOG.md](docs/BUILD_LOG.md) for progress, [docs/PLAN.md](docs/PLAN.md) for the plan, and
 [docs/DESIGN.md](docs/DESIGN.md) for the architecture.
 

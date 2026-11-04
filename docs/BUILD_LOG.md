@@ -245,3 +245,10 @@ Dates are in IST.
   case showed the agent's own note ("outside both rule packs"), so it now shows only where to go. On the
   emulator, the complaint read well in dark mode, "not fixed" asked about a reply and went back to
   waiting, a scam story went to 1930, and the reminder job survived a full restart and fired when forced.
+- Haq now runs in the browser too, so anyone can try it without Android. The website is plain HTML,
+  CSS and JavaScript in `server/web`, served by the same server as the app's API, with headers that
+  let only its own code run; text from the server is only ever shown as text. It does what the app
+  does, except that the email cannot carry the proof (there is a download for each file) and there is
+  no reminder notification (it offers a calendar file). On a local server it ran a UPI case from
+  three files through the complaint, "sent", "not fixed", an answer and deletion; on the live server
+  it showed a damaged-order case with the marked photo. Voice notes on the web are not tested yet.

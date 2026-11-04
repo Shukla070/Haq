@@ -29,6 +29,34 @@ class ToldTest(unittest.TestCase):
         self.assertEqual("You told Haq in a voice note.", api._told(data))
 
 
+class WebsiteTest(unittest.TestCase):
+    def setUp(self):
+        self.workspace = Workspace()
+        self.client = TestClient(api.app)
+
+    def tearDown(self):
+        self.workspace.close()
+
+    def test_the_website_is_served_at_the_root(self):
+        response = self.client.get("/")
+        self.assertEqual(200, response.status_code)
+        self.assertIn("haq.js", response.text)
+
+    def test_the_website_runs_only_its_own_code(self):
+        policy = self.client.get("/haq.js").headers["content-security-policy"]
+        self.assertIn("default-src 'self'", policy)
+        self.assertIn("frame-ancestors 'none'", policy)
+        self.assertNotIn("unsafe", policy)
+
+    def test_the_api_still_answers_first(self):
+        self.assertEqual({"ok": True, "model": config.model()}, self.client.get("/health").json())
+        self.assertEqual(401, self.client.get("/cases").status_code)
+
+    def test_files_outside_the_website_cannot_be_read(self):
+        self.assertEqual(404, self.client.get("/../haq/config.py").status_code)
+        self.assertEqual(404, self.client.get("/no-such-page.js").status_code)
+
+
 class DeviceTokenTest(unittest.TestCase):
     def setUp(self):
         self.workspace = Workspace()
