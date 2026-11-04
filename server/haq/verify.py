@@ -11,7 +11,8 @@ the agent, and the agent cannot skip it. A draft passes only if:
 - every cited rule's source is named in the body, and every circular or section
   reference in the body belongs to a cited rule,
 - the body contains no sensitive numbers and no text flagged as an injection attempt,
-- nothing the customer reads uses Haq's own labels for evidence, facts or statements.
+- nothing the customer reads uses Haq's own labels for evidence, facts or statements, and
+  nothing the bank or company reads talks about how Haq works (its tools or checklist).
 """
 
 from __future__ import annotations
@@ -31,6 +32,11 @@ _CIRCULAR = re.compile(
     re.IGNORECASE,
 )
 _LABEL = re.compile(r"\b[EFU]\d+\b")
+_INTERNAL = re.compile(
+    r"\b(tools?|calculate_entitlement|check_escalation|submit_draft|record_fact|rule pack|verifier|checklist|"
+    r"(?:large )?language model|as an ai)\b",
+    re.IGNORECASE,
+)
 
 
 def _amounts(text: str, pattern: re.Pattern = _AMOUNT) -> set:
@@ -81,6 +87,20 @@ def internal_labels(case: Case, text: str) -> list:
         f"{label} is Haq's own label, which the customer won't understand: describe it instead, such as 'the marked photo'"
         for label in sorted(set(_LABEL.findall(text or "")) & labels)
         if not re.search(rf"\b{label}\b", theirs)
+    ]
+
+
+def internal_words(case: Case, text: str) -> list:
+    """Words about how Haq works ("as the tools calculate") in text a bank or company reads. A word
+    the customer's own material also uses, such as a tool kit they ordered, is left alone."""
+    data = case.data
+    theirs = " ".join([data.get("story") or ""] + [e.get("text") or "" for e in data["evidence"]]).lower()
+    found = {match.lower() for match in _INTERNAL.findall(text or "")}
+    return [
+        f"'{word}' is about how Haq works, which the bank or company should never see: write it as the customer would "
+        "(for example 'calculated up to 4 November' instead of 'as the tools calculate')"
+        for word in sorted(found)
+        if not re.search(rf"\b{re.escape(word)}\b", theirs)
     ]
 
 
@@ -151,6 +171,8 @@ def check(case: Case, draft: dict) -> list:
         problems.append(f"the draft repeats text flagged as an injection attempt: {phrase!r}")
     for part in ("recipient", "subject", "body", "next_steps"):
         problems += internal_labels(case, draft.get(part) or "")
+    for part in ("recipient", "subject", "body"):
+        problems += internal_words(case, draft.get(part) or "")
     name = case.data.get("customer_name")
     if name and normalize(name) not in normalize(body[-200:]):
         problems.append(f"sign the complaint at the end with the customer's name, {name}")

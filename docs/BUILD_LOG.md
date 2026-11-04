@@ -252,3 +252,12 @@ Dates are in IST.
   no reminder notification (it offers a calendar file). On a local server it ran a UPI case from
   three files through the complaint, "sent", "not fixed", an answer and deletion; on the live server
   it showed a damaged-order case with the marked photo. Voice notes on the web are not tested yet.
+- A vague live case showed two gaps. "I sent 1000 at a shop, not sure if it was deducted", answered
+  with "Nvm got it", still got a complaint with a guessed date ("on or around 4 November") and a report
+  the customer never made; the question before it had seven parts. Now the code that works out
+  deadlines refuses a date that neither the evidence nor the customer mentions (it reads numeric
+  dates, month names, Hindi months, "today" and "kal"), questions over about 50 words are sent back
+  to be shortened, and the prompt says not to draft without a date. Another complaint said "as the
+  tools calculate", so the verifier now refuses talk of Haq's tools or checklist in a complaint. Rerun
+  against the model, the vague case asked a short question twice and drafted nothing, and the pharmacy
+  demo case gave the same complaint, now "as calculated up to 4 November 2026".

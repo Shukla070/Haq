@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 
 from .. import config, rules
+from ..dates import supported
 
 DEFINITION = {
     "type": "function",
@@ -16,7 +17,10 @@ DEFINITION = {
         "additionalProperties": False,
         "properties": {
             "variant": {"type": "string", "description": "a variant id from classify_dispute"},
-            "transaction_date": {"type": "string", "description": "YYYY-MM-DD, the day of the payment or order"},
+            "transaction_date": {
+                "type": "string",
+                "description": "YYYY-MM-DD, the day of the payment or order, as the evidence or the customer gives it; never a guess",
+            },
             "reversed_on": {"type": "string", "description": "YYYY-MM-DD if the money came back, else empty"},
         },
         "required": ["variant", "transaction_date", "reversed_on"],
@@ -30,6 +34,16 @@ def run(ctx, args: dict) -> dict:
     pack = rules.load(ctx.case.data["dispute_type"])
     variant = str(args.get("variant", ""))
     reversed_on = str(args.get("reversed_on") or "")
+    data = ctx.case.data
+    # The customer's own words and the evidence, not the agent's paraphrase in user statements.
+    theirs = [data.get("story") or ""] + [e.get("text") or "" for e in data["evidence"]]
+    theirs += [q["answer"] for q in data["questions"] if q.get("answer")]
+    for label, value in (("transaction_date", str(args.get("transaction_date", ""))), ("reversed_on", reversed_on)):
+        if value and not supported(date.fromisoformat(value), theirs, config.today()):
+            return {
+                "error": f"{label} {value} is not in the evidence or the customer's own words. Do not guess dates: "
+                "ask the customer for it with ask_user, or use a date the evidence shows."
+            }
     result = rules.entitlement(
         pack,
         variant,
